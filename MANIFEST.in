@@ -1,0 +1,4 @@
+include Makefile *.rst *.txt
+recursive-include gaidaros/stuff *
+recursive-include examples *
+recursive-include docs *
