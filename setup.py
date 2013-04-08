@@ -169,8 +169,6 @@ def main():
     except ImportError:
         from distutils.core import setup
     setup(**METADATA)
-#    from distutils.core import setup
-#    setup(**METADATA)
 
 if __name__ == '__main__':
     main()
