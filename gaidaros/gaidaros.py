@@ -5,7 +5,7 @@
 async server framework for control freaks
 """
 
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 
 __all__ = ['Gaidaros', 'usage', 'warn', 'die', 'log']
 
