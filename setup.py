@@ -94,7 +94,7 @@ METADATA = dict(
     ],
     classifiers = [
         'Development Status :: 3 - Alpha',
-        'Environment :: Network Environment',
+        'Environment :: Other Environment',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
         'Operating System :: POSIX',
