@@ -38,14 +38,18 @@ class post_install_d(install_data):
         install_data.run(self)
         _regex_sub_lines(
             pjoin(sys.prefix, 'etc', 'gaidaros', 'gaidaros.conf'),
-            ('^basedir ?:.*$', 'basedir: ' + sys.prefix), ('^lib ?=.*$', 'lib = %(basedir)s/lib/python{}.{}/site-packages/gaidaros'.format(sys.version_info[0], sys.version_info[1])))
+            ('^basedir ?:.*$', 'basedir: ' + sys.prefix),
+            ('^lib ?=.*$',
+             'lib = %(basedir)s/lib/python{}.{}/site-packages/gaidaros'.format(
+                 sys.version_info[0], sys.version_info[1])))
 
 class post_install_s(install_scripts):
     def run(self):
         install_scripts.run(self)
         _regex_sub_lines(
             pjoin(sys.prefix, 'bin', 'run_gaidaros'),
-            ("^    conf = '/etc/gaidaros/gaidaros.conf'$", "    conf = '" + sys.prefix + "/etc/gaidaros/gaidaros.conf'"))
+            ("^    conf = '/etc/gaidaros/gaidaros.conf'$",
+             "    conf = '" + sys.prefix + "/etc/gaidaros/gaidaros.conf'"))
 
 
 def _in_dir(dirpath, files):
@@ -66,7 +70,8 @@ def _files_glob(path, globpatt, on_sys_prefix=False, trim_path=False):
 def _find_packages(incl_tests=False):
     for dir in glob.glob('*'):
         if pisdir(dir) and pisfile(pjoin(dir, '__init__.py')):
-            if incl_tests or not (dir == 'test' or dir[-5:] == '.test' or dir[:5] == 'test.' or re.match('\.test\.', dir)):
+            if incl_tests or not (
+                dir == 'test' or dir[-5:] == '.test' or dir[:5] == 'test.' or re.match('\.test\.', dir)):
                 yield dir
 
 METADATA = dict(
@@ -84,7 +89,8 @@ METADATA = dict(
     data_files = [
         (pjoin('etc', 'gaidaros'), _files_glob(['gaidaros', 'stuff'], '*.conf')),
         (pjoin('usr', 'share', 'doc', 'gaidaros'), ['LICENSE.txt', 'README.rst'] + _files_glob(['docs'], '*.rst')),
-        (pjoin('usr', 'share', 'doc', 'gaidaros', 'examples'), _files_glob(['examples'], '*.py') + _files_glob(['examples'], '*.sh')),
+        (pjoin('usr', 'share', 'doc', 'gaidaros', 'examples'),
+         _files_glob(['examples'], '*.py') + _files_glob(['examples'], '*.sh')),
     ],
     classifiers = [
         'Development Status :: 3 - Alpha',
@@ -110,8 +116,8 @@ METADATA = dict(
         'Topic :: System :: Networking',
     ],
     keywords = ["async", "tcp", "server"],
-#    package_dir = {'gaidaros': 'gaidaros'}, ## redundant
-#    py_modules = ['gaidaros'], ## redundant
+#    package_dir = {'gaidaros': 'gaidaros'}, ## redundant?
+#    py_modules = ['gaidaros'], ## redundant?
 #    maintainer = '', ## not yet needed
 #    maintainer_email = '', ## not yet needed
 #    platforms = [], ## not yet needed
@@ -119,7 +125,7 @@ METADATA = dict(
 
 SETUPTOOLS_METADATA = dict(
 #    include_package_data = True,
-#    package_data = {'gaidaros': ['stuff/*']}, ## better having this installed to /etc by data_files
+#    package_data = {'gaidaros': ['stuff/*']}, ## better having this installed to /etc by data_files?
 #    zip_safe = False,
 #    test_suite = '', ##TODO
 #    entry_points = {}, ## not yet needed
@@ -135,7 +141,8 @@ def readlines_file_as_arr(file):
         arr = map(lambda x: x.rstrip('\n').rstrip('\r'), f.readlines())
     return arr
 
-## TODO: will need set_from_file as dict later, to support 'extras_require' for optional features (e.g. Tornado frontend, etc)
+## TODO: will need set_from_file as dict later, to support 'extras_require' for optional features
+##       (e.g. Tornado frontend, etc)
 #def readlines_file_as_dict(file):
 #    with open(pjoin(pdirname(__file__), file)) as f:
 #        dict = map(lambda x: x.rstrip('\n').rstrip('\r'), f.readlines())
@@ -156,7 +163,8 @@ def main():
 #    set_from_file('extras_requirements.txt', SETUPTOOLS_METADATA, 'extras_require', 'dict')
     try:
         from setuptools import setup, find_packages
-#        SETUPTOOLS_METADATA['packages'] = find_packages(exclude=["*.test", "*.test.*", "test.*", "test"]) ## I do my own version of this now
+        ## I do my own version of this now
+#        SETUPTOOLS_METADATA['packages'] = find_packages(exclude=["*.test", "*.test.*", "test.*", "test"])
         METADATA.update(SETUPTOOLS_METADATA)
     except ImportError:
         from distutils.core import setup
