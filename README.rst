@@ -20,12 +20,75 @@ under the sun, it just tries to do all the basics accurately
 and reliably - like a donkey. So, that's the naming rationale
 issue out of the way...
 
-Source code for Gaidaros is on
-`Github <http://github.com/rowanthorpe/gaidaros/>`_.
+Features
+--------
 
-From pypi::
+* Minimalism (priority on leanness, speed, configurability
+  and base completeness rather than added features)
+
+* Thin wrapper to underlying async socket mechanisms
+
+* Everything configurable by config-files and passed
+  arguments
+
+* Pass in handlers by name, (module, class) or as
+  pre-created functions, methods or code objects
+
+* *TODO*: Multiple server processors can be run on the polling
+  socket using multiprocessing (or a pool thereof)
+
+* *TODO*: Handlers can be run in threads, greenthreads,
+  multiprocesses, and pools of any of those three
+
+* *TODO*: Handlers can be run on a cluster using parallel
+  processing ("pp"/"pyparallel"). Cluster nodes can in turn
+  use threads, greenthreads, multiprocesses, or pools
+  thereof too
+
+* IPv4 and/or IPv6, *TODO*: SSL, etc
+
+* TCP, *TODO*: UDP, unixsocket, etc
+
+* *TODO*: Can be used with various frontends (e.g. Tornado)
+
+
+Installation
+------------
+
+From pypi
+~~~~~~~~~
+
+::
 
     $ pip install gaidaros
+
+To install Gaidaros using pip you must make sure you have a
+recent version of distribute installed
+
+::
+
+    $ curl -O http://python-distribute.org/distribute_setup.py
+    $ sudo python distribute_setup.py
+    $ easy_install pip
+
+From source
+~~~~~~~~~~~
+
+::
+
+    $ git clone https://github.com/rowanthorpe/gaidaros.git
+    $ cd gaidaros && pip install -r requirements.txt
+
+From latest released tarball
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+::
+
+    $ wget --no-check-certificate https://api.github.com/repos/rowanthorpe/gaidaros/tarball/0.1.0
+
+
+Build Status
+------------
 
 When properly integrated with Travis the project's status
 should appear below this:
@@ -33,54 +96,6 @@ should appear below this:
 .. image:: https://secure.travis-ci.org/rowanthorpe/gaidaros.png?branch=master
    :alt: Build Status
    :target: https://secure.travis-ci.org/rowanthorpe/gaidaros
-
-
-Features
---------
-
- * Minimalism (priority on leanness, speed, configurability
-   and base completeness rather than added features)
-
- * Thin wrapper to underlying async socket mechanisms
-
- * Everything configurable by config-files and passed
-   arguments
-
- * Pass in handlers by name, (module, class) or as
-   pre-created functions, methods or code objects
-
- * *TODO*: Multiple server processors can be run on the polling
-   socket using multiprocessing (or a pool thereof)
-
- * *TODO*: Handlers can be run in threads, greenthreads,
-   multiprocesses, and pools of any of those three
-
- * *TODO*: Handlers can be run on a cluster using parallel
-   processing ("pp"/"pyparallel"). Cluster nodes can in turn
-   use threads, greenthreads, multiprocesses, or pools
-   thereof too
-
- * IPv4 and/or IPv6, *TODO*: SSL, etc
-
- * TCP, *TODO*: UDP, unixsocket, etc
-
- * *TODO*: Can be used with various frontends (e.g. Tornado)
-
-
-Installation
-------------
-
-To install Gaidaros using pip you must make sure you have a
-recent version of distribute installed::
-
-    $ curl -O http://python-distribute.org/distribute_setup.py
-    $ sudo python distribute_setup.py
-    $ easy_install pip
-
-To install from source, run the following command::
-
-    $ git clone https://github.com/rowanthorpe/gaidaros.git
-    $ cd gaidaros && pip install -r requirements.txt
 
 
 Author
