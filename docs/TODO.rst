@@ -2,6 +2,8 @@
 TODO
 ====
 
+*See sample code at http://code.activestate.com/recipes/574454-thread-pool-mixin-class-for-use-with-socketservert for threadpools*
+
 *Bracketed version numbers are intended milestones for each goal.*
 
 * bin/gaidaros.py & lib/gaidaros.py - IMPORTS:
