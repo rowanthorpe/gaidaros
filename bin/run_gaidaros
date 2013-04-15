@@ -6,7 +6,7 @@ if __name__ == '__main__':
     conf = '/etc/gaidaros/gaidaros.conf'
     ## imports
     usage_text = """\
-Usage: python gaidaros.py OPTIONS
+Usage: run_gaidaros [OPTIONS]
 
 OPTIONS:
  -c [] : Config file to source (str: default = None)

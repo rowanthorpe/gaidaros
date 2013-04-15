@@ -32,7 +32,7 @@ def _regex_sub_lines(file_path, *pat_subs):
     os.remove(file_path)
     shutil.move(abs_path, file_path)
 
-# TODO: see if there is a more automated way of specifying the python-lib path
+# TODO: see if there is a more elegant way of specifying the python-lib path
 class post_install_d(install_data):
     def run(self):
         install_data.run(self)
@@ -51,9 +51,6 @@ class post_install_s(install_scripts):
             ("^    conf = '/etc/gaidaros/gaidaros.conf'$",
              "    conf = '" + sys.prefix + "/etc/gaidaros/gaidaros.conf'"))
 
-
-def _in_dir(dirpath, files):
-    return map(lambda x: pjoin(*(dirpath + [x])), files)
 
 def _files_glob(path, globpatt, on_sys_prefix=False, trim_path=False):
     if on_sys_prefix:
@@ -149,6 +146,7 @@ def readlines_file_as_arr(file):
 #        ... TODO ...
 #    return dict
 
+## TODO: use proper python parsing => str, arr, or dict. Not readlines-type hacks.
 def set_from_file(file, dict, val, as_type):
     if as_type == 'array':
         dict[val] = readlines_file_as_arr(file)
@@ -160,10 +158,10 @@ def set_from_file(file, dict, val, as_type):
 def main():
     set_from_file('README.rst', METADATA, 'long_description', 'string')
     set_from_file('requirements.txt', SETUPTOOLS_METADATA, 'install_requires', 'array')
-#    set_from_file('extras_requirements.txt', SETUPTOOLS_METADATA, 'extras_require', 'dict')
+#    set_from_file('extra_requirements.txt', SETUPTOOLS_METADATA, 'extras_require', 'dict')
     try:
-        from setuptools import setup, find_packages
-        ## I do my own version of this now
+        ## I do my own version of find_packages now
+        from setuptools import setup #, find_packages
 #        SETUPTOOLS_METADATA['packages'] = find_packages(exclude=["*.test", "*.test.*", "test.*", "test"])
         METADATA.update(SETUPTOOLS_METADATA)
     except ImportError:
