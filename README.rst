@@ -68,7 +68,7 @@ recent version of distribute installed
 ::
 
     $ curl -O http://python-distribute.org/distribute_setup.py
-    $ sudo python distribute_setup.py
+    $ sudo python setup.py
     $ easy_install pip
 
 From source
@@ -84,7 +84,7 @@ From latest released tarball
 
 ::
 
-    $ wget --no-check-certificate https://api.github.com/repos/rowanthorpe/gaidaros/tarball/0.1.1
+    $ wget --no-check-certificate https://api.github.com/repos/rowanthorpe/gaidaros/tarball/0.2.0
 
 
 Build Status
