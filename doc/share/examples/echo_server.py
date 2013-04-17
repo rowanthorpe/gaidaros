@@ -1,5 +1,5 @@
 #!/usr/bin/env python
 
-from gaidaros import *
+from gaidaros.gaidaros import *
 server = Gaidaros()
 server.serve()

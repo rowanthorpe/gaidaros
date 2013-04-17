@@ -1,5 +1,5 @@
 #!/usr/bin/env python
 
-from gaidaros import *
+from gaidaros.gaidaros import *
 server = Gaidaros(handle_request = lambda x: "Hello World: you said \"{}\"\n".format(x.rstrip('\n')))
 server.handle()
