@@ -48,7 +48,7 @@ if project_license == 'mit':
     project_license_text = 'The MIT License: http://www.opensource.org/licenses/mit-license.php'
 if project_hosttype == 'github':
     project_url_template = 'https://github.com/@username@/@name@'
-    project_downloadurl_template = 'https://api.github.com/repos/@username@/@name@/tarball/@version@'
+    project_downloadurl_template = 'https://github.com/@username@/@name@/tarball/@version@'
 if project_repotype == 'git':
     def project_update_version(fh_in, fh_out):
         import subprocess
@@ -60,15 +60,22 @@ if __name__ == '__main__':
     if sys.argv[1] == 'set_version':
         exitval = 0
         lib_file = p_realpath(p_join(p_dirname(__file__), 'lib', project_name + '.py'))
-        with open(lib_file + '.in', 'r') as fh_in:
-            if project_repotype == 'git':
-                if not p_isdir(p_join(p_dirname(__file__), '.git')):
-                    sys.stderr.write("You tried to update the version information from {} but the repo files appear not to be in this directory.\n".format(project_repotype))
-                    exitval = 1
-            else:
-                sys.stderr.write("Repo type {} not implemented yet.\n".format(project_repotype))
+        readme_file = p_realpath(p_join(p_dirname(__file__), 'README.rst'))
+        if project_repotype == 'git':
+            if not p_isdir(p_join(p_dirname(__file__), '.git')):
+                sys.stderr.write("You tried to update the version information from {} but the repo files appear not to be in this directory.\n".format(project_repotype))
                 exitval = 1
+        else:
+            sys.stderr.write("Repo type {} not implemented yet.\n".format(project_repotype))
+            exitval = 1
+        with open(lib_file + '.in', 'r') as fh_in:
             with open(lib_file, 'w') as fh_out:
+                if len(sys.argv) > 2 and sys.argv[2]:
+                    fh_out.write(re.sub('@version@', sys.argv[2], fh_in.read()))
+                else:
+                    project_update_version(fh_in, fh_out)
+        with open(readme_file + '.in', 'r') as fh_in:
+            with open(readme_file, 'w') as fh_out:
                 if len(sys.argv) > 2 and sys.argv[2]:
                     fh_out.write(re.sub('@version@', sys.argv[2], fh_in.read()))
                 else:
