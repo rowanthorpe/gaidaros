@@ -218,7 +218,7 @@ def main():
     _set_from_file('requirements.txt', METADATA, 'requires', 'array')
 ## NB: Don't need setuptools for now, using distutils only
 #    _set_from_file('requirements.txt', SETUPTOOLS_METADATA, 'install_requires', 'array')
-#    _set_from_file('extra_requirements.txt', SETUPTOOLS_METADATA, 'extras_require', 'dict')
+#    _set_from_file('requirements_extra.txt', SETUPTOOLS_METADATA, 'extras_require', 'dict')
 #    try:
 #        from setuptools import setup #, find_packages - I do my own version of find_packages now
 #        SETUPTOOLS_METADATA['packages'] = find_packages(exclude=["*.test", "*.test.*", "test.*", "test"])
