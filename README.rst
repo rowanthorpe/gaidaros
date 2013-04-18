@@ -1,6 +1,6 @@
-===================================================
-Gaidaros: async server framework for control-freaks
-===================================================
+=========================================================
+Gaidaros: Async server micro-framework for control freaks
+=========================================================
 
 Gaidaros is an async socket server framework which has been
 designed for network developers, with an emphasis on easy
@@ -19,6 +19,7 @@ This framework doesn't try to implement every trendy feature
 under the sun, it just tries to do all the basics accurately
 and reliably - like a donkey. So, that's the naming rationale
 issue out of the way...
+
 
 Features
 --------
@@ -98,8 +99,9 @@ should appear below this:
    :target: https://secure.travis-ci.org/rowanthorpe/gaidaros
 
 
-Author
-------
+Authors
+-------
+
 Rowan Thorpe <rowan@rowanthorpe.com>
 
 
