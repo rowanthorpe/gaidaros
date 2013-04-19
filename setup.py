@@ -12,6 +12,7 @@
 # FIXME(_find_packages()): Directory recursion (present version is a quick hack)
 # FIXME: Add macro replacement based on python version
 # FIXME: Make updating files with paths part of the build pass, not post-install
+# FIXME: Make macro expansion in "run_XXXXXXX" file more explicit (at the moment is too intrusive)
 # TODO: Recursive macro-expansion
 # TODO: Multiple authors -> macros?
 # TODO: Add more license types, host types, repo types, etc

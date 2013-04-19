@@ -55,8 +55,8 @@ NOTES:
         if sys_path: sys.path.insert(0, os.path.expanduser(sys_path))
     ## import server lib
     import re, csv
-    from gaidaros.gaidaros import *
-    from gaidaros.gaidaros import __version__
+    from gaidaros import *
+    from gaidaros import __version__
     usage_text += """
 VERSION:
 {}
