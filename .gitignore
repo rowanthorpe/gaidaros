@@ -15,8 +15,8 @@ parts
 sdist
 develop-eggs
 .installed.cfg
-lib
-lib64
+#lib
+#lib64
 
 # Installer logs
 pip-log.txt
