@@ -85,7 +85,7 @@ From latest released tarball
 
 ::
 
-    $ wget --no-check-certificate https://github.com/rowanthorpe/gaidaros/tarball/0.2.6
+    $ wget --no-check-certificate https://github.com/rowanthorpe/gaidaros/tarball/0.2.7
 
 
 Build Status
