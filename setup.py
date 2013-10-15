@@ -3,14 +3,13 @@
 #
 # This file is part of Gaidaros. See README.rst for more information.
 #
-# This setup.py and file hierarchy is from the setup-with-teeth project (v0.1.0):
+# This setup.py and file hierarchy is from the setup-with-teeth project (v0.1.5):
 #  https://github.com/rowanthorpe/setup-with-teeth
-#  replace all [####] with your own text
+#  replace all XXXXXXX with your own text
 
 '''Setup and build script for Gaidaros.'''
 
 # FIXME(_find_packages()): Directory recursion (present version is a quick hack)
-# FIXME: Add macro replacement based on python version
 # FIXME: Make updating files with paths part of the build pass, not post-install
 # FIXME: Make macro expansion in "run_XXXXXXX" file more explicit (at the moment is too intrusive)
 # TODO: Recursive macro-expansion
@@ -70,9 +69,6 @@ else:
 if project['hosttype'] == 'github':
     project['url_template'] = 'https://github.com/@username@/@name@'
     project['downloadurl_template'] = 'https://github.com/@username@/@name@/tarball/@version@'
-elif project['hosttype'] == 'grnet':
-    project['url_template'] = 'https://code.grnet.gr/projects/@name@'
-    project['downloadurl_template'] = 'https://code.grnet.gr/git/@name@'
 else:
     project['url_template'] = 'none'
     project['downloadurl_template'] = 'none'
