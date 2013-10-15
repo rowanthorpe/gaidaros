@@ -114,13 +114,13 @@ Gaidaros uses the MIT license, check LICENSE file.
 Contributors
 ------------
 
- * Just Rowan, so far...
+* Just Rowan, so far...
 
 
 Thanks also to
 --------------
 
- * Scott Doyle for the `well-written blog-post about epoll <http://scotdoyle.com/python-epoll-howto.html>`_ which inspired me to start this project.
+* Scott Doyle for the `well-written blog-post about epoll <http://scotdoyle.com/python-epoll-howto.html>`_ which inspired me to start this project.
 
 
 .. figure:: http://farm1.staticflickr.com/10/11189916_202acb3d5a_z.jpg
