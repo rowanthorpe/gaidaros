@@ -114,7 +114,7 @@ Gaidaros uses the MIT license, check LICENSE file.
 Contributors
 ------------
 
-* Just Rowan, so far...
+* Just Rowan Thorpe, so far...
 
 
 Thanks also to
