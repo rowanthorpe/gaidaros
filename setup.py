@@ -51,7 +51,9 @@ project = {
     'keywords': ["async", "tcp", "server"],
     'macros_to_replace': ['name', 'username', 'description', 'author', 'author_email', 'license'],
 }
-project['name'] = p_basename(p_dirname(p_realpath(__file__)))
+#FIXME: override manually until a virtualenv-friendly solution is found
+#project['name'] = p_basename(p_dirname(p_realpath(__file__)))
+project['name'] = 'gaidaros'
 project['files_to_expand'] = p_join('lib', project['name'] + '.py'), 'README.rst', 'MANIFEST.in'
 ## EDIT - END ##
 
