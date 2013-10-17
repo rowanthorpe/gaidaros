@@ -100,12 +100,13 @@ if __name__ == '__main__':
             else:
                 sys.stderr.write('WARNING: Specified file to expand "{}" does not have an input file "{}". Skipping.\n'.format(file_to_expand, file_to_expand + '.in'))
         sys.exit(0)
-    else:
-        for file_to_expand in project['files_to_expand']:
-            file_to_expand = p_realpath(p_join(p_dirname(__file__), file_to_expand))
-            if not p_isfile(file_to_expand):
-                sys.stderr.write('"{}" doesn\'t yet exist. The maintainer should run "python setup.py macros" before packaging this.\n'.format(file_to_expand))
-                sys.exit(1)
+# FIXME: this doesn't work with virtualenv... :-(
+#    else:
+#        for file_to_expand in project['files_to_expand']:
+#            file_to_expand = p_realpath(p_join(p_dirname(__file__), file_to_expand))
+#            if not p_isfile(file_to_expand):
+#                sys.stderr.write('"{}" doesn\'t yet exist. The maintainer should run "python setup.py macros" before packaging this.\n'.format(file_to_expand))
+#                sys.exit(1)
 
 sys.path.insert(0, p_realpath(p_join(p_dirname(__file__), 'lib')))
 project['version'] = getattr(__import__(project['name'], fromlist=['__version__']), '__version__')
