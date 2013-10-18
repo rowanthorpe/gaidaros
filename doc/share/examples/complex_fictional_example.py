@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from gaidaros.gaidaros import *
+from gaidaros import Gaidaros
 server = Gaidaros(
     conf = './conffile.conf',             # Source a custom config
     host = 'ip6-localhost',               # Resolve IPv6 localhost by name

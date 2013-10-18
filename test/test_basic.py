@@ -1,5 +1,6 @@
-import os, sys
-sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname('__file__'), '..', 'lib')))
-from gaidaros import gaidaros
-sys.path.pop(0)
-sys.exit(0)
+#!/usr/bin/env python
+
+from gaidaros.gaidaros import *
+server = Gaidaros()
+#TODO: run a client to do a request against a one-time handle action
+#server.handle()
