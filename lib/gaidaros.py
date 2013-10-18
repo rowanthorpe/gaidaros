@@ -5,9 +5,12 @@
 Async server micro-framework for control freaks
 """
 __version__ = '0.2.13'
-__all__ = ['Gaidaros', 'usage', 'warn', 'die', 'log']
 import sys, os, re
-import __main__ as main
+try:
+    __gaidarosfile__ = sys.modules['__main__'].__file__
+except AttributeError:
+    __gaidarosfile__ = 'gaidaros.py'
+__all__ = ['Gaidaros', 'usage', 'warn', 'die', 'log', '__gaidarosfile__']
 
 def __print_nl(data, ostream = sys.stdout):
     ostream.write(data + ['\n', ''][data[-1:] == '\n'])
@@ -19,7 +22,7 @@ def warn(warning, ostream = sys.stderr, with_usage = False, usage_func = None):
         if hasattr(usage_func, '__call__'): usage_func(ostream = ostream)
         else: usage(ostream = ostream)
         ostream.write('\n')
-    __print_nl(os.path.basename(main.__file__) + ': ' + warning, ostream = ostream)
+    __print_nl(os.path.basename(__gaidarosfile__) + ': ' + warning, ostream = ostream)
 
 def die(warning = None, stack = None, with_usage = False, usage_func = None):
     if warning: warn(warning, with_usage = with_usage, usage_func = usage_func)
