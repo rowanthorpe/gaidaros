@@ -4,7 +4,7 @@
 """
 Async server micro-framework for control freaks
 """
-__version__ = '0.2.12'
+__version__ = '0.2.13'
 __all__ = ['Gaidaros', 'usage', 'warn', 'die', 'log']
 import sys, os, re
 import __main__ as main
