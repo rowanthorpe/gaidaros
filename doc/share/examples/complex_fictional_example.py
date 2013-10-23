@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# encoding: utf-8
+from __future__ import unicode_literals
 
 from gaidaros import Gaidaros
 server = Gaidaros(
@@ -10,12 +12,11 @@ server = Gaidaros(
     poll_timeout = 2,                     # Take longer to respond to signals
     recv_size = 4096,                     # Attempt to read bigger blocks from the socket
     handler_class = 'myclass',            # If a string, it is looked up and sourced
-    handler_class_args = [ db = db.sqlite, version=3 ],
+    handler_class_args = (db=db.sqlite, version=3),
                                           # Arguments to pass to the handler's __init__() for accessing an sqlite3 server
     handler_module = mymodule,            # This is an already sourced/defined object, to be accessed directly.
     handle_request = 'handle_request'     # This names the function by string, which is looked for as mymodule.handle_request (or just handle_request, if module unspecified)
-    end_request = lambda x: b'\n\n' in x, # This defines a callable inline, which will be used directly
-    split_request = 'compile:lambda x: x.split(b"\\n\\n", 1)'
-                                          # This compiles an object inline (which will be auto-wrapped with a function because it has no __call__ method)
+    end_request = lambda x: '\n\n' in x,  # This defines a callable inline, which will be used directly
+    split_request = 'eval:("blah", 1)     # This compiles an object inline.
 )
 server.serve()

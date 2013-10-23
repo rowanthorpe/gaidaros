@@ -1,5 +1,6 @@
 #/usr/bin/env python
 # encoding: utf-8
+from __future__ import unicode_literals, with_statement
 #
 # This file is part of Gaidaros. See README.rst for more information.
 #
@@ -19,7 +20,6 @@
 # TODO(_set_from_file()): Use proper python parsing => str, arr, or dict. Not readlines-type hacks.
 # TODO(_readlines_file_as_dict()): Will need _set_from_file as dict later, to support 'extras_require' for optional features (e.g. Tornado frontend, etc)
 
-from __future__ import with_statement
 from os.path import join as p_join, dirname as p_dirname, realpath as p_realpath, basename as p_basename, abspath as p_abspath, split as p_split, isdir as p_isdir, isfile as p_isfile, pardir as p_pardir
 
 ## EDIT - BEGIN ##
@@ -93,12 +93,12 @@ if __name__ == '__main__':
                     sys.stderr.write('WARNING: File to generate "{}" is already newer than input file "{}". "touch" the input file to override. Skipping.\n'.format(file_to_expand, file_to_expand + '.in'))
                 else:
                     with open(file_to_expand + '.in', 'r') as fh_in:
-                        file_content = fh_in.read()
+                        file_content = fh_in.read().decode('utf-8')
                     project['macros_to_replace'].append('version')
                     for macro_to_replace in project['macros_to_replace']:
                         file_content = re.sub('@' + macro_to_replace + '@', project[macro_to_replace], file_content)
                     with open(file_to_expand, 'w') as fh_out:
-                        fh_out.write(file_content)
+                        fh_out.write(file_content.encode('utf-8'))
             else:
                 sys.stderr.write('WARNING: Specified file to expand "{}" does not have an input file "{}". Skipping.\n'.format(file_to_expand, file_to_expand + '.in'))
         sys.exit(0)

@@ -1,7 +1,13 @@
 #!/usr/bin/env python
 # encoding: utf-8
+# from __future__ import unicode_literals
 
 if __name__ == '__main__':
+    ## imports
+    import ConfigParser, sys, os, re, csv
+    from getopt import getopt
+    from gaidaros import *
+    from gaidaros import __version__
     ## edit this line if you wish to have a different fallback
     conf = '/usr/local/etc/gaidaros/gaidaros.conf'
     usage_text = """\
@@ -24,23 +30,18 @@ OPTIONS:
  -e [] : handler End-of-request method name (str: default = 'end_request')
  -s [] : handler Split-request method name (str: default = 'split_request')
  -u    : this usage message
-
-NOTES:
- handle_request (-M), end_request (-e) and split_request (-s) can only accept
- compilable code ("compile:*") from the command line if the user is root, for
- security reasons.
 """
-    ## imports
-    import ConfigParser, sys, os, getopt
     ## defs
-    def usage(ostream = sys.stderr): ostream.write(usage_text)
+    def usage(ostream = sys.stderr):
+        ostream.write(usage_text)
     ## preset vars
     host = port = ip_version = backlog = poll_timeout = recv_size = handler_class = handler_class_args = handler_module = handle_request = end_request = split_request = None
     ## parse opts
-    optlist, arguments = getopt.getopt(sys.argv[1:],'c:h:p:i:46b:t:r:x:a:m:M:e:s:u')
+    optlist, arguments = getopt(sys.argv[1:],'c:h:p:i:46b:t:r:x:a:m:M:e:s:u')
     ## get conf location from opts (shortcut to usage/exit if requested)
     for switch, val in optlist:
-        if switch == '-c': conf = str(val)
+        if switch == '-c':
+            conf = val
         if switch == '-u':
             usage(ostream = sys.stdout)
             sys.exit(0)
@@ -52,11 +53,8 @@ NOTES:
         cnf.readfp(cnf_fp)
         cnf_fp.close()
         sys_path = cnf.get('global', 'lib')
-        if sys_path: sys.path.insert(0, os.path.expanduser(sys_path))
-    ## import server lib
-    import re, csv
-    from gaidaros import *
-    from gaidaros import __version__
+        if sys_path:
+            sys.path.insert(0, os.path.expanduser(sys_path))
     usage_text += """
 VERSION:
 {}
@@ -64,36 +62,54 @@ VERSION:
     ## getopts
     try:
         for switch, val in optlist:
-            # TODO: check if val is always a str, if so remove unneeded str()s
-            if switch == '-c': pass # already set
-            if switch == '-h': host = str(val)
-            if switch == '-p': port = int(val)
-            if switch == '-i': ip_version = int(val)
-            if switch == '-4': ip_version = 4
-            if switch == '-6': ip_version = 6
-            if switch == '-b': backlog = int(val)
-            if switch == '-t': poll_timeout = int(val)
-            if switch == '-r': recv_size = int(val)
-            if switch == '-x': handler_class = str(val)
-            # initial backslash-expanding allows for easily embeding other codes (like '\\n' => [newline], '\\\\n' => '\\n')
-            if switch == '-a': handler_class_args = list(*csv.reader([str(val)], skipinitialspace = True, quoting = csv.QUOTE_NONE, escapechar = '\\'))
-            if switch == '-m': handler_module = str(val)
-            if switch == '-M': handle_request = str(val)
-            if switch == '-e': end_request = str(val)
-            if switch == '-s': split_request = str(val)
-            if switch == '-u': raise RuntimeError, 'This line should never be reached (-u causes an exit earlier)!'
-    except StandardError as e: die(warning = 'Problem setting values from options', stack = e, usage_func = usage)
-    ## sanity check
-    try:
-        if ('compile:' in map(lambda x: x[:8], [handle_request or '', end_request or '', split_request or ''])) and os.geteuid() == 0:
-            raise RuntimeError, 'Can\'t pass compilable code ("compile:*") from commandline unless you are the root user, for security reasons. NB: This advisory means nothing if the appropriate code isn\'t "chown root; chmod 700", which is the way to enforce it.'
-    except StandardError as e: die(warning = 'Problem validating values from options', stack = e, usage_func = usage)
+            if switch == '-c':
+                pass # already set
+            if switch == '-h':
+                host = val
+            if switch == '-p':
+                port = int(val)
+            if switch == '-i':
+                ip_version = int(val)
+            if switch == '-4':
+                ip_version = 4
+            if switch == '-6':
+                ip_version = 6
+            if switch == '-b':
+                backlog = int(val)
+            if switch == '-t':
+                poll_timeout = int(val)
+            if switch == '-r':
+                recv_size = int(val)
+            if switch == '-x':
+                handler_class = val
+            # Initial backslash-expanding allows for easily embeding other codes
+            # (like '\\n' => [newline], '\\\\n' => '\\n')
+            if switch == '-a':
+                handler_class_args = list(
+                    *csv.reader([str(val)], skipinitialspace = True, quoting = csv.QUOTE_NONE, escapechar = '\\')
+                )
+            if switch == '-m':
+                handler_module = val
+            if switch == '-M':
+                handle_request = val
+            if switch == '-e':
+                end_request = val
+            if switch == '-s':
+                split_request = val
+            if switch == '-u':
+                raise NameError('This line should never be reached (-u a=should have caused an exit earlier)!')
+    except StandardError as e:
+        die(warning='Problem setting values from options', stack=e, usage_func=usage)
     ## initiate server
-    try: server = Gaidaros(host = host, port = port, ip_version = ip_version, \
-                           backlog = backlog, poll_timeout = poll_timeout, recv_size = recv_size, \
-                           handler_class = handler_class, handler_class_args = handler_class_args, handler_module = handler_module, \
-                           handle_request = handle_request, end_request = end_request, split_request = split_request)
-    except StandardError as e: die(warning = 'Problem instantiating server', stack = e, usage_func = usage)
+    try: server = Gaidaros(
+        host=host, port=port, ip_version=ip_version, \
+        backlog=backlog, poll_timeout=poll_timeout, recv_size=recv_size, \
+        handler_class=handler_class, handler_class_args=handler_class_args, handler_module=handler_module, \
+        handle_request=handle_request, end_request=end_request, split_request=split_request)
+    except StandardError as e:
+        die(warning='Problem instantiating server', stack=e, usage_func=usage)
     ## run server
-    try: server.serve()
-    except StandardError as e: die(warning = 'Problem running server', stack = e)
+    try:
+        server.serve()
+    except StandardError as e:
+        die(warning='Problem running server', stack=e)

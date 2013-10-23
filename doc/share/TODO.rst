@@ -8,7 +8,7 @@ TODO
 
 * bin/gaidaros.py & lib/gaidaros.py - IMPORTS:
 
- - [v0.2] signal (propagate interrupts), daemon, argparse (instead of getopt)
+ - [v0.4] signal (propagate interrupts), daemon, argparse (instead of getopt)
 
  - [v0.5] mp, threading, gevent.?, doctest, from timeit import Timer
 
@@ -22,7 +22,7 @@ TODO
 
 * bin/gaidaros.py - OPTIONS:
 
- - [v0.2]
+ - [v0.4]
 
    -d
        Daemon (bool)
@@ -142,7 +142,7 @@ TODO
 
 * etc/gaidaros.conf - CONF:
 
- - [v0.2]::
+ - [v0.4]::
 
      [global]
      daemon = False
@@ -185,7 +185,9 @@ TODO
 
 * OTHER:
 
- - [v0.2] Work out proper minimum requirements (python version, etc) for packaging
+ - [v0.3.5] Be more explicit about socket "error" handling ("pass" on specific EWOULDBLOCK rather than all, etc)
+
+ - [v0.4] Work out proper minimum requirements (python version, etc) for packaging
 
  - [v0.5] Allow config to chain-source configs (limited functionality and locations though, so user can't hijack the system).
 
