@@ -53,7 +53,7 @@ project = {
 }
 #FIXME: override manually until a virtualenv-friendly solution is found
 #project['name'] = p_basename(p_dirname(p_realpath(__file__)))
-project['name'] = 'gaidaros'
+project['name'] = b'gaidaros'
 project['files_to_expand'] = p_join('lib', project['name'] + '.py'), 'README.rst', 'MANIFEST.in'
 ## EDIT - END ##
 
