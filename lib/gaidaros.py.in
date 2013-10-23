@@ -147,7 +147,7 @@ class Gaidaros(object):
                 end_request = self._globals[end_request_name]
             elif end_request == 'end_request':
                 def end_request(request):
-                    return('\r\n' in request.decode('utf8'))
+                    return('\n' in request.decode('utf8'))
             else:
                 raise ValueError('end_request is not the name of a valid method or function. It is: {}'.format(end_request_name))
         elif inspect.isroutine(end_request):
@@ -164,7 +164,7 @@ class Gaidaros(object):
             elif split_request_name == 'split_request':
                 def split_request(request):
                     _req = request.decode('utf8')
-                    _splitpoint = _req.find('\r\n') + 2
+                    _splitpoint = _req.find('\n') + 1
                     return(_req[:_splitpoint], _req[_splitpoint:])
             else:
                 raise ValueError('split_request is not the name of a valid method or function. It is: {}'.format(split_request_name))
@@ -306,7 +306,7 @@ class Gaidaros(object):
 
 if __name__ == '__main__':
     # If executed directly this runs as a minimal one-line echo server (with
-    # CRLF end-of-lines, listening on all interfaces, port 8080, IPv4 & IPv6
+    # LF end-of-lines, listening on all interfaces, port 8080, IPv4 & IPv6
     # with no keepalive or logging to console) in a loop until interrupted (by
     # keyboard or signal).
     server = Gaidaros()
