@@ -7,7 +7,7 @@ import sys, os, re, ConfigParser, inspect, importlib, socket, select, errno
 Async server micro-framework for control freaks
 """
 __version__ = '0.3.4'
-__all__ = ('Gaidaros', 'usage', 'warn', 'die', 'log')
+__all__ = (b'Gaidaros', b'usage', b'warn', b'die', b'log')
 
 def __print_nl(data, ostream=sys.stdout):
     ostream.write(data + ('\n', '')[data[-1:] == '\n'])
