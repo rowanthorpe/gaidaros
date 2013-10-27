@@ -20,7 +20,7 @@ TODO
 
  - [v3.0] tornado_pyuv, etc (frontends), gettext, locale
 
-* bin/gaidaros.py - OPTIONS:
+* bin/gaidaros - OPTIONS:
 
  - [v0.4]
 
@@ -82,6 +82,7 @@ TODO
          * "none"
          * "zlib"
          * "gzip"
+         * "lzo"
          * default = "none"
 
    -C arg
@@ -140,7 +141,7 @@ TODO
          * e.g. "tornado", ...
          * default = ""
 
-* etc/gaidaros.conf - CONF:
+* etc/gaidaros/gaidaros.conf - CONF:
 
  - [v0.4]::
 
@@ -185,12 +186,23 @@ TODO
 
 * OTHER:
 
- - [v0.3.10] Be more explicit about socket "error" handling ("pass" on specific EWOULDBLOCK rather than all, etc)
+ - [v0.3.10]::
 
- - [v0.4] Work out proper minimum requirements (python version, etc) for packaging
+     * be more explicit about socket "error" handling ("pass" on specific EWOULDBLOCK rather than all, etc)
+     * GC: cleanup zombie connections from connections list after a configurable timeout
 
- - [v0.5] Allow config to chain-source configs (limited functionality and locations though, so user can't hijack the system).
+ - [v0.4]::
 
- - [v2.5] Run proper benchmark tests to compare to leading async servers, then profile loops, etc. Based on that use cython syntax to speed things up.
+     * work out proper minimum requirements (python version, etc) for packaging
 
- - [v3.0] config directory with other example handlers (e.g. HTTP, SMTP, etc)
+ - [v0.5]::
+
+     * allow config to chain-source configs (limited functionality and locations though, so user can't hijack the system).
+
+ - [v2.5]::
+
+     * run proper benchmark tests to compare to leading async servers, then profile loops, etc. Based on that use cython syntax to speed things up.
+
+ - [v3.0]::
+
+     * config directory with other example handlers (e.g. HTTP, SMTP, etc)
