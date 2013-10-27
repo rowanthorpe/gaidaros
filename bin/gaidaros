@@ -15,8 +15,8 @@ Usage: gaidaros [OPTIONS]
 
 OPTIONS:
  -v    : Verbose output
- -c [] : Config file to source (str: default = None)
- -h [] : Host (str: default = '::')
+ -c [] : Config file to source (str: default = """ + conf + """)
+ -H [] : Host (str: default = '::')
  -p [] : Port (int: default = 8080)
  -i [] : Ip version (int: 0 = 'both', default = 0)
  -4    : shortcut for "-i 4"
@@ -27,7 +27,7 @@ OPTIONS:
  -x [] : handler class name (str: default = <internal echo-handler>)
  -a [] : comma-separated list of handler class Args (array: default = [])
  -m [] : Module to load in order to find handler class (str: default = '')
- -M [] : handler handle-request Method name (str: default = 'handle_request')
+ -h [] : handler Handle-request method name (str: default = 'handle_request')
  -e [] : handler End-of-request method name (str: default = 'end_request')
  -s [] : handler Split-request method name (str: default = 'split_request')
  -u    : this usage message
@@ -38,7 +38,7 @@ OPTIONS:
     ## preset vars
     verbose = host = port = ip_version = backlog = poll_timeout = recv_size = handler_class = handler_class_args = handler_module = handle_request = end_request = split_request = None
     ## parse opts
-    optlist, arguments = getopt(sys.argv[1:],'vc:h:p:i:46b:t:r:x:a:m:M:e:s:u')
+    optlist, arguments = getopt(sys.argv[1:],'vc:H:p:i:46b:t:r:x:a:m:h:e:s:u')
     ## get conf location from opts (shortcut to usage/exit if requested)
     for switch, val in optlist:
         if switch == '-c':
@@ -67,7 +67,7 @@ VERSION:
                 verbose = True
             elif switch == '-c':
                 pass # already set
-            elif switch == '-h':
+            elif switch == '-H':
                 host = val
             elif switch == '-p':
                 port = int(val)
@@ -93,7 +93,7 @@ VERSION:
                 )
             elif switch == '-m':
                 handler_module = val
-            elif switch == '-M':
+            elif switch == '-h':
                 handle_request = val
             elif switch == '-e':
                 end_request = val

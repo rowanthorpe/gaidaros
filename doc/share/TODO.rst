@@ -185,7 +185,7 @@ TODO
 
 * OTHER:
 
- - [v0.3.5] Be more explicit about socket "error" handling ("pass" on specific EWOULDBLOCK rather than all, etc)
+ - [v0.3.10] Be more explicit about socket "error" handling ("pass" on specific EWOULDBLOCK rather than all, etc)
 
  - [v0.4] Work out proper minimum requirements (python version, etc) for packaging
 

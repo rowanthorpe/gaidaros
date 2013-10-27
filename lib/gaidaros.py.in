@@ -22,7 +22,7 @@ def warn(warning, ostream=sys.stderr, with_usage=False, usage_func=None):
         else:
             usage(ostream=ostream)
         ostream.write('\n')
-    __print_nl(os.path.basename(main.__file__) + ': ' + warning, ostream=ostream)
+    __print_nl(os.path.basename(__file__) + ': ' + warning, ostream=ostream)
 
 def die(warning=None, stack=None, with_usage=False, usage_func=None):
     if warning:
@@ -53,7 +53,7 @@ class Gaidaros(object):
             self.cnf.readfp(cnf_fp)
             cnf_fp.close()
             if verbose is None:
-                verbose = self.cnf.getbool('parameter', 'verbose')
+                verbose = self.cnf.getboolean('parameter', 'verbose')
             if host is None:
                 host = self.cnf.get('parameter', 'host')
             if port is None:
@@ -149,12 +149,18 @@ class Gaidaros(object):
                 def end_request(request):
                     return('\n' in request.decode('utf8'))
             else:
-                raise ValueError('end_request is not the name of a valid method or function. It is: {}'.format(end_request_name))
+                try:
+                    if end_request_name[:7] == 'lambda ':
+                        end_request = eval(end_request_name)
+                    else:
+                        raise SyntaxError
+                except SyntaxError:
+                    raise ValueError('end_request is not the name of a valid method or function, and doesn\'t look like a valid lambda. It is: {}'.format(end_request_name))
         elif inspect.isroutine(end_request):
             if end_request_name in (None, ''):
                 end_request_name = end_request.__name__
         else:
-            raise TypeError('end_request is not a valid function or method. It is: {} (type {})'.format(end_request, type(end_request)))
+            raise TypeError('end_request is not a valid function or method. Its type is: {} (type {})'.format(end_request, type(end_request)))
         if isinstance(split_request, basestring):
             split_request_name = split_request
             if self.handler and hasattr(self.handler, split_request_name) and inspect.method(getattr(self.handler, split_request_name)):
@@ -167,12 +173,18 @@ class Gaidaros(object):
                     _splitpoint = _req.find('\n') + 1
                     return(_req[:_splitpoint], _req[_splitpoint:])
             else:
-                raise ValueError('split_request is not the name of a valid method or function. It is: {}'.format(split_request_name))
+                try:
+                    if split_request_name[:7] == 'lambda ':
+                        split_request = eval(split_request_name)
+                    else:
+                        raise SyntaxError
+                except SyntaxError:
+                    raise ValueError('split_request is not the name of a valid method or function, and doesn\'t look like a valid lambda. It is: {}'.format(split_request_name))
         elif inspect.isroutine(split_request):
             if split_request_name in (None, ''):
                 split_request_name = split_request.__name__
         else:
-            raise TypeError('split_request is not a valid function or method. It is: {} (type {})'.format(split_request, type(split_request)))
+            raise TypeError('split_request is not a valid function or method. Its type is: {} (type {})'.format(split_request, type(split_request)))
         if isinstance(handle_request, basestring):
             handle_request_name = handle_request
             if self.handler and hasattr(self.handler, handle_request_name) and inspect.method(getattr(self.handler, handle_request_name)):
@@ -183,12 +195,18 @@ class Gaidaros(object):
                 def handle_request(request):
                     return(request.encode('utf8'), False)
             else:
-                raise ValueError('handle_request is not the name of a valid method or function. It is: {}'.format(handle_request_name))
+                try:
+                    if handle_request_name[:7] == 'lambda ':
+                        handle_request = eval(handle_request_name)
+                    else:
+                        raise SyntaxError
+                except SyntaxError:
+                    raise ValueError('handle_request is not the name of a valid method or function, and doesn\'t look like a valid lambda. It is: {}'.format(handle_request_name))
         elif inspect.isroutine(handle_request):
             if handle_request_name in (None, ''):
                 handle_request_name = handle_request.__name__
         else:
-            raise TypeError('handle_request is not a valid function or method. It is: {} (type {})'.format(handle_request, type(handle_request)))
+            raise TypeError('handle_request is not a valid function or method. Its type is: {} (type {})'.format(handle_request, type(handle_request)))
         self.end_request_name = end_request_name
         self.split_request_name = split_request_name
         self.handle_request_name = handle_request_name
