@@ -53,29 +53,29 @@ class Gaidaros(object):
             self.cnf.readfp(cnf_fp)
             cnf_fp.close()
             if verbose is None:
-                verbose = self.cnf.getbool('global', 'verbose')
+                verbose = self.cnf.getbool('parameter', 'verbose')
             if host is None:
-                host = self.cnf.get('global', 'host')
+                host = self.cnf.get('parameter', 'host')
             if port is None:
-                port = self.cnf.getint('global', 'port')
+                port = self.cnf.getint('parameter', 'port')
             if ip_version is None:
-                ip_version = self.cnf.getint('global', 'ip_version')
+                ip_version = self.cnf.getint('parameter', 'ip_version')
             if backlog is None:
-                backlog = self.cnf.getint('global', 'backlog')
+                backlog = self.cnf.getint('parameter', 'backlog')
             if poll_timeout is None:
-                poll_timeout = self.cnf.getint('global', 'poll_timeout')
+                poll_timeout = self.cnf.getint('parameter', 'poll_timeout')
             if recv_size is None:
-                recv_size = self.cnf.getint('global', 'recv_size')
+                recv_size = self.cnf.getint('parameter', 'recv_size')
+            if handler_module is None:
+                handler_module = self.cnf.get('handler', 'module')
             if handler_class is None:
                 handler_class = self.cnf.get('handler', 'class')
             if handler_class_args is None:
                 handler_class_args = [x.strip() for x in self.cnf.get('handler', 'class_args').split(',')]
-            if handler_module is None:
-                handler_module = self.cnf.get('handler', 'module')
             if end_request is None:
                 end_request = self.cnf.get('handler', 'end_request')
             if split_request is None:
-                end_request = self.cnf.get('handler', 'end_request')
+                split_request = self.cnf.get('handler', 'split_request')
             if handle_request is None:
                 handle_request = self.cnf.get('handler', 'handle_request')
         ## set the remaining defaults not specified by conf

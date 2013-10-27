@@ -14,6 +14,7 @@ if __name__ == '__main__':
 Usage: gaidaros [OPTIONS]
 
 OPTIONS:
+ -v    : Verbose output
  -c [] : Config file to source (str: default = None)
  -h [] : Host (str: default = '::')
  -p [] : Port (int: default = 8080)
@@ -35,9 +36,9 @@ OPTIONS:
     def usage(ostream = sys.stderr):
         ostream.write(usage_text)
     ## preset vars
-    host = port = ip_version = backlog = poll_timeout = recv_size = handler_class = handler_class_args = handler_module = handle_request = end_request = split_request = None
+    verbose = host = port = ip_version = backlog = poll_timeout = recv_size = handler_class = handler_class_args = handler_module = handle_request = end_request = split_request = None
     ## parse opts
-    optlist, arguments = getopt(sys.argv[1:],'c:h:p:i:46b:t:r:x:a:m:M:e:s:u')
+    optlist, arguments = getopt(sys.argv[1:],'vc:h:p:i:46b:t:r:x:a:m:M:e:s:u')
     ## get conf location from opts (shortcut to usage/exit if requested)
     for switch, val in optlist:
         if switch == '-c':
@@ -52,7 +53,7 @@ OPTIONS:
         cnf_fp = open(os.path.expanduser(conf))
         cnf.readfp(cnf_fp)
         cnf_fp.close()
-        sys_path = cnf.get('global', 'lib')
+        sys_path = cnf.get('dir', 'lib')
         if sys_path:
             sys.path.insert(0, os.path.expanduser(sys_path))
     usage_text += """
@@ -62,50 +63,53 @@ VERSION:
     ## getopts
     try:
         for switch, val in optlist:
-            if switch == '-c':
+            if switch == '-v':
+                verbose = True
+            elif switch == '-c':
                 pass # already set
-            if switch == '-h':
+            elif switch == '-h':
                 host = val
-            if switch == '-p':
+            elif switch == '-p':
                 port = int(val)
-            if switch == '-i':
+            elif switch == '-i':
                 ip_version = int(val)
-            if switch == '-4':
+            elif switch == '-4':
                 ip_version = 4
-            if switch == '-6':
+            elif switch == '-6':
                 ip_version = 6
-            if switch == '-b':
+            elif switch == '-b':
                 backlog = int(val)
-            if switch == '-t':
+            elif switch == '-t':
                 poll_timeout = int(val)
-            if switch == '-r':
+            elif switch == '-r':
                 recv_size = int(val)
-            if switch == '-x':
+            elif switch == '-x':
                 handler_class = val
             # Initial backslash-expanding allows for easily embeding other codes
             # (like '\\n' => [newline], '\\\\n' => '\\n')
-            if switch == '-a':
+            elif switch == '-a':
                 handler_class_args = list(
                     *csv.reader([str(val)], skipinitialspace = True, quoting = csv.QUOTE_NONE, escapechar = '\\')
                 )
-            if switch == '-m':
+            elif switch == '-m':
                 handler_module = val
-            if switch == '-M':
+            elif switch == '-M':
                 handle_request = val
-            if switch == '-e':
+            elif switch == '-e':
                 end_request = val
-            if switch == '-s':
+            elif switch == '-s':
                 split_request = val
-            if switch == '-u':
+            elif switch == '-u':
                 raise NameError('This line should never be reached (-u a=should have caused an exit earlier)!')
     except StandardError as e:
         die(warning='Problem setting values from options', stack=e, usage_func=usage)
     ## initiate server
-    try: server = Gaidaros(
-        host=host, port=port, ip_version=ip_version, \
-        backlog=backlog, poll_timeout=poll_timeout, recv_size=recv_size, \
-        handler_class=handler_class, handler_class_args=handler_class_args, handler_module=handler_module, \
-        handle_request=handle_request, end_request=end_request, split_request=split_request)
+    try:
+        server = Gaidaros(
+            verbose=verbose, conf=conf, host=host, port=port, ip_version=ip_version, \
+            backlog=backlog, poll_timeout=poll_timeout, recv_size=recv_size, \
+            handler_class=handler_class, handler_class_args=handler_class_args, handler_module=handler_module, \
+            handle_request=handle_request, end_request=end_request, split_request=split_request)
     except StandardError as e:
         die(warning='Problem instantiating server', stack=e, usage_func=usage)
     ## run server
