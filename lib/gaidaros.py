@@ -6,7 +6,7 @@ import sys, os, re, ConfigParser, inspect, importlib, socket, select, errno
 """
 Async server micro-framework for control freaks
 """
-__version__ = '0.3.3'
+__version__ = '0.3.4'
 __all__ = ('Gaidaros', 'usage', 'warn', 'die', 'log')
 
 def __print_nl(data, ostream=sys.stdout):

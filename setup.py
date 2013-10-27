@@ -7,7 +7,7 @@ from __future__ import unicode_literals, with_statement
 #
 # See README.rst for more information.
 #
-# This setup.py and file hierarchy is from the setup-with-teeth project (v0.2.4):
+# This setup.py and file hierarchy is from the setup-with-teeth project (v0.2.5):
 #  https://github.com/rowanthorpe/setup-with-teeth
 #  replace all XXXXXXX with your own text
 
@@ -186,28 +186,28 @@ class MyInstallScripts(d_install_scripts):
     def run(self):
         d_install_scripts.run(self)
         _regex_sub_lines(p_join(_configpaths['scripts'], project['name']),
-          ('^ *conf *=.*$',
-           '    conf = "' + p_join(_configprefix, project['name'], project['name'] + '.conf"')))
+          (r'^( *)conf *=.*$',
+           r'\1conf = "' + p_join(_configprefix, project['name'], project['name'] + r'.conf"')))
 
 class MyInstallData(d_install_data):
     def run(self):
         d_mkpath(p_join(_configprefix, project['name'])) #GOTCHA: needed for virtualenvs, @prefix@/etc sometimes doesn't exist (even as symlink)
         d_install_data.run(self)
         _regex_sub_lines(p_join(_configprefix, project['name'], project['name'] + '.conf'),
-          ('^ *basedir *:.*$',
-           'basedir: ' + _configvars['base']),
-          ('^ *root *=.*$',
-           'root = %(basedir)s'),
-          ('^ *lib *=.*$',
-           'lib = ' + re.sub('^' + _configvars['base'], '%(basedir)s', p_join(_configpaths['purelib'], project['name']))),
-          ('^ *scripts *=.*$',
-           'scripts = ' + re.sub('^' + _configvars['base'], '%(basedir)s', _configpaths['scripts'])),
-          ('^ *run *=.*$',
-           'run = ' + re.sub('^' + _configvars['base'], '%(basedir)s', p_join(_configvars['base'], 'run', project['name']))),
-          ('^ *configs *=.*$',
-           'configs = ' + re.sub('^' + _configvars['base'], '%(basedir)s', p_join(_configprefix, project['name']))),
-          ('^ *docs *=.*$',
-           'docs = ' + re.sub('^' + _configvars['base'], '%(basedir)s', p_join(_configvars['base'], 'share', 'doc', project['name']))))
+          (r'^( *)basedir *:.*$',
+           r'\1basedir: ' + _configvars['base']),
+          (r'^( *)root *=.*$',
+           r'\1root = %(basedir)s'),
+          (r'^( *)lib *=.*$',
+           r'\1lib = ' + re.sub(r'^' + _configvars['base'], r'%(basedir)s', p_join(_configpaths['purelib'], project['name']))),
+          (r'^( *)scripts *=.*$',
+           r'\1scripts = ' + re.sub(r'^' + _configvars['base'], r'%(basedir)s', _configpaths['scripts'])),
+          (r'^( *)run *=.*$',
+           r'\1run = ' + re.sub(r'^' + _configvars['base'], r'%(basedir)s', p_join(_configvars['base'], 'run', project['name']))),
+          (r'^( *)configs *=.*$',
+           r'\1configs = ' + re.sub(r'^' + _configvars['base'], r'%(basedir)s', p_join(_configprefix, project['name']))),
+          (r'^( *)docs *=.*$',
+           r'\1docs = ' + re.sub(r'^' + _configvars['base'], r'%(basedir)s', p_join(_configvars['base'], 'share', 'doc', project['name']))))
 
 ## MAIN ##
 
@@ -235,7 +235,7 @@ if sys.argv[1] == 'macros':
                 with open(file_to_expand + '.in', 'r') as fh_in:
                     file_content = fh_in.read().decode('utf-8')
                 for macro_to_replace in project['macros_to_replace']:
-                    file_content = re.sub('@' + macro_to_replace + '@', project[macro_to_replace], file_content)
+                    file_content = re.sub(r'@' + macro_to_replace + r'@', project[macro_to_replace], file_content)
                 with open(file_to_expand, 'w') as fh_out:
                     fcntl.lockf(fh_out, fcntl.LOCK_EX)
                     fh_out.write(file_content.encode('utf-8'))
@@ -281,8 +281,8 @@ else:
             if _these_files:
                 METADATA['package_data'][_dir] = _these_files
     for macro_to_expand in ['name', 'username', 'version', 'hosttype', 'repotype']:
-        METADATA['url'] = re.sub('@' + macro_to_expand + '@', project[macro_to_expand], METADATA['url'])
-        METADATA['download_url'] = re.sub('@' + macro_to_expand + '@', project[macro_to_expand], METADATA['download_url'])
+        METADATA['url'] = re.sub(r'@' + macro_to_expand + r'@', project[macro_to_expand], METADATA['url'])
+        METADATA['download_url'] = re.sub(r'@' + macro_to_expand + r'@', project[macro_to_expand], METADATA['download_url'])
     _set_dict_from_file('README.rst', METADATA, 'long_description', 'string')
     _set_dict_from_file('requirements.txt', METADATA, 'requires', 'array')
 
