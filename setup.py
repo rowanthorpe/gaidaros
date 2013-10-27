@@ -1,28 +1,59 @@
 #/usr/bin/env python
 # encoding: utf-8
 from __future__ import unicode_literals, with_statement
-#
-# This file is part of Gaidaros. See README.rst for more information.
-#
-# This setup.py and file hierarchy is from the setup-with-teeth project (v0.1.5):
-#  https://github.com/rowanthorpe/setup-with-teeth
-#  replace all XXXXXXX with your own text
 
 '''Setup and build script for Gaidaros.'''
 
-# FIXME(_find_packages()): Directory recursion (present version is a quick hack)
+#
+# See README.rst for more information.
+#
+# This setup.py and file hierarchy is from the setup-with-teeth project (v0.2.3):
+#  https://github.com/rowanthorpe/setup-with-teeth
+#  replace all XXXXXXX with your own text
+
 # FIXME: Make updating files with paths part of the build pass, not post-install
-# FIXME: Make macro expansion in "run_XXXXXXX" file more explicit (at the moment is too intrusive)
+# FIXME: Make macro expansion in "bin/XXXXXXX" file more explicit (at the moment is too intrusive)
+# FIXME: Generate project name from directory (even in virtualenv, pip, etc)
+# TODO: add logic for using more vars from projects[], e.g. package_data, etc
+# TODO: add more hosttypes
 # TODO: Recursive macro-expansion
-# TODO: Multiple authors -> macros?
+# TODO: Multiple authors -> iterable macros?
 # TODO: Add more license types, host types, repo types, etc
-# TODO(_find_packages()): Add code to heuristically check if there are only directories in 'lib', then use _find_packages, otherwise just set package from package_name, and set its dir as 'lib'
-# TODO(_set_from_file()): Use proper python parsing => str, arr, or dict. Not readlines-type hacks.
-# TODO(_readlines_file_as_dict()): Will need _set_from_file as dict later, to support 'extras_require' for optional features (e.g. Tornado frontend, etc)
+# TODO(_set_dict_from_file()): Use proper python parsing => str, arr, or dict. Not readlines-type hacks.
 
-from os.path import join as p_join, dirname as p_dirname, realpath as p_realpath, basename as p_basename, abspath as p_abspath, split as p_split, isdir as p_isdir, isfile as p_isfile, pardir as p_pardir
+if __name__ != '__main__':
+    raise RuntimeError('This script should only be run directly. It is not a library.')
 
-## EDIT - BEGIN ##
+import os, sys, shutil, tempfile, glob, sysconfig, re, fcntl, subprocess, importlib
+from os.path import join as p_join, dirname as p_dirname, realpath as p_realpath, basename as p_basename, \
+                    isdir as p_isdir, isfile as p_isfile, pardir as p_pardir, getmtime as p_getmtime, \
+                    normpath as p_normpath, splitdrive as p_splitdrive
+from distutils.dir_util import mkpath as d_mkpath
+from distutils.command.install_data import install_data as d_install_data
+from distutils.command.install_scripts import install_scripts as d_install_scripts
+from distutils.core import setup
+from distutils.dist import DistributionMetadata
+
+## GLOBAL VARS SETUP ##
+
+_newdirsep = p_realpath('.')
+_dirsep = ''
+while _newdirsep != _dirsep: # iterate to find '/' or the system equivalent
+    _dirsep = _newdirsep
+    _newdirsep = p_dirname(_dirsep)
+_dirsep = p_splitdrive(_dirsep)[1]
+del _newdirsep
+_projectpath = p_realpath('.')
+_configvars = sysconfig.get_config_vars()
+_configpaths = sysconfig.get_paths()
+if p_basename(_configpaths['data']) == 'usr': #GOTCHA: '[path]/usr', not only '/usr', to allow for virtualenvs...
+    _configprefix = p_normpath(p_join(_configpaths['data'], p_pardir, 'etc')) # "[path]/usr" => "[path]/etc" ("[path]/usr/etc", FHS-friendly)
+else:
+    _configprefix = p_join(_configpaths['data'], 'etc') # "[path]/[something_else]" => "[path]/[something_else]/etc"
+_dirsep, _projectpath, _configprefix = unicode(_dirsep), unicode(_projectpath), unicode(_configprefix)
+
+## TO EDIT ##
+
 project = {
     'description': 'Async server micro-framework for control freaks',
     'hosttype': 'github',
@@ -30,7 +61,6 @@ project = {
     'username': 'rowanthorpe',
     'author': 'Rowan Thorpe',
     'author_email': 'rowan@rowanthorpe.com',
-    'license': 'mit',
     'classifiers': [
         'Development Status :: 3 - Alpha',
         'Environment :: Other Environment',
@@ -49,232 +79,242 @@ project = {
         'Topic :: System :: Networking',
     ],
     'keywords': ["async", "tcp", "server"],
-    'macros_to_replace': ['name', 'username', 'description', 'author', 'author_email', 'license'],
+    'macros_to_replace': ['name', 'username', 'description', 'author', 'author_email', 'license', 'version'],
+    'license': None,          #NB: "...", if needed (not in classifiers)
+    'py_modules': None,       #NB: [...], if needed
+    'maintainer': None,       #NB: "...", if needed
+    'maintainer_email': None, #NB: "...", if needed
+    'platforms': None,        #NB: [...], if needed
 }
-#FIXME: override manually until a virtualenv-friendly solution is found
-#project['name'] = p_basename(p_dirname(p_realpath(__file__)))
-project['name'] = b'gaidaros'
-project['files_to_expand'] = p_join('lib', project['name'] + '.py'), 'README.rst', 'MANIFEST.in'
-## EDIT - END ##
 
-## TEMPLATES - BEGIN ##
-if project['license'] == 'mit':
-    project['license_text'] = 'The MIT License: http://www.opensource.org/licenses/mit-license.php'
-else:
-    project['license_text'] = 'none'
+## MAY BE EDITED ##
+
+#project['name'] = unicode(p_basename(_projectpath)) #FIXME: doesn't play nice with virtualenv
+project['name'] = 'gaidaros'
+sys.path.insert(0, p_join(_projectpath, 'lib'))
+project.update({
+    'files_to_expand': (p_join('lib', project['name'] + '.py'), 'README.rst'), #'MANIFEST.in',
+    'version': getattr(importlib.import_module(project['name']), '__version__'),
+})
+del sys.path[0]
+
+## TEMPLATES ##
+
+#TODO: more hosttypes
 if project['hosttype'] == 'github':
     project['url_template'] = 'https://github.com/@username@/@name@'
-    project['downloadurl_template'] = 'https://github.com/@username@/@name@/tarball/@version@'
-else:
-    project['url_template'] = 'none'
-    project['downloadurl_template'] = 'none'
-## TEMPLATES - END ##
+    project['download_url_template'] = 'https://github.com/@username@/@name@/tarball/@version@'
+#if project['license'] == '[weird unknown license]':
+#    project['license_text'] = 'The [weird unknown] License: [url]'
 
-import sys, re
-if __name__ == '__main__':
-    if sys.argv[1] == 'macros':
-        from os.path import getmtime as p_getmtime
-        if len(sys.argv) > 2 and sys.argv[2]:
-            project['version'] = sys.argv[2]
-        else:
-            if project['repotype'] == 'git':
-                if not p_isdir(p_realpath(p_join(p_dirname(__file__), '.git'))):
-                    sys.stderr.write("You tried to update version information but the repo files appear not to be in this directory.\n".format(project['repotype']))
-                    sys.exit(1)
-                import subprocess
-                project['version'] = subprocess.Popen(['cd {} && git describe --abbrev=0'.format(p_realpath(p_dirname(__file__)))], stdout=subprocess.PIPE, shell=True).communicate()[0].rstrip('\n').rstrip('\r')
+## FUNCTIONS ##
+
+def _files_glob(path, globs, trim_prefix='', realpath=False):
+    if not path:
+        path = '.'
+    if realpath:
+        path = p_realpath(path)
+        if trim_prefix:
+            trim_prefix = p_realpath(trim_prefix)
+    elif trim_prefix:
+        trim_prefix = p_normpath(trim_prefix)
+    for globlet in globs:
+        globresults = glob.glob(p_normpath(p_join(path, globlet)))
+        for globresult in globresults:
+            if trim_prefix and len(trim_prefix + _dirsep) < len(globresult) and globresult[:len(trim_prefix + _dirsep)] == trim_prefix + _dirsep:
+                result = globresult[len(trim_prefix + _dirsep):]
             else:
-                sys.stderr.write("Repo type {} not implemented yet.\n".format(project['repotype']))
-                sys.exit(1)
-        for file_to_expand in project['files_to_expand']:
-            file_to_expand = p_realpath(p_join(p_dirname(__file__), file_to_expand))
-            if p_isfile(file_to_expand + '.in'):
-                if p_isfile(file_to_expand) and p_getmtime(file_to_expand) > p_getmtime(file_to_expand + '.in'):
-                    sys.stderr.write('WARNING: File to generate "{}" is already newer than input file "{}". "touch" the input file to override. Skipping.\n'.format(file_to_expand, file_to_expand + '.in'))
-                else:
-                    with open(file_to_expand + '.in', 'r') as fh_in:
-                        file_content = fh_in.read().decode('utf-8')
-                    project['macros_to_replace'].append('version')
-                    for macro_to_replace in project['macros_to_replace']:
-                        file_content = re.sub('@' + macro_to_replace + '@', project[macro_to_replace], file_content)
-                    with open(file_to_expand, 'w') as fh_out:
-                        fh_out.write(file_content.encode('utf-8'))
-            else:
-                sys.stderr.write('WARNING: Specified file to expand "{}" does not have an input file "{}". Skipping.\n'.format(file_to_expand, file_to_expand + '.in'))
-        sys.exit(0)
-# FIXME: this doesn't work with virtualenv... :-(
-#    else:
-#        for file_to_expand in project['files_to_expand']:
-#            file_to_expand = p_realpath(p_join(p_dirname(__file__), file_to_expand))
-#            if not p_isfile(file_to_expand):
-#                sys.stderr.write('"{}" doesn\'t yet exist. The maintainer should run "python setup.py macros" before packaging this.\n'.format(file_to_expand))
-#                sys.exit(1)
+                result = globresult
+            yield unicode(result)
 
-sys.path.insert(0, p_realpath(p_join(p_dirname(__file__), 'lib')))
-project['version'] = getattr(__import__(project['name'], fromlist=['__version__']), '__version__')
-sys.path.pop(0)
-import os, shutil, tempfile, glob, sysconfig
-from distutils.dir_util import mkpath
-from distutils.command.install_data import install_data
-from distutils.command.install_scripts import install_scripts
-config_values = sysconfig.get_config_vars()
-config_paths = sysconfig.get_paths()
-## NB: Don't just check '/usr', to allow for virtualenvs
-if p_basename(config_paths['data']) == 'usr':
-    ## installing to "/usr", so "etc" -> "/etc" (not to /usr/etc, to be FHS friendly)
-    _conf_prefix = p_join(config_paths['data'], p_pardir, 'etc')
-else:
-    ## installing to "somewhere_else", so "etc" -> "somewhere_else/etc"
-    _conf_prefix = p_join(config_paths['data'], 'etc')
+def _files_glob_l(*args, **kws):
+    return list(_files_glob(*args, **kws))
 
-class MyInstallScripts(install_scripts):
-    def run(self):
-        install_scripts.run(self)
-        _regex_sub_lines(p_join(config_paths['scripts'], 'run_' + project['name']),
-          ('^ *conf *=.*$',
-           '    conf = "' + p_join(_conf_prefix, project['name'], project['name'] + '.conf"')))
+def _find_dirs(topdir='lib'):
+    if p_isdir(topdir):
+        for _dir in os.walk(topdir):
+            if p_isfile(p_join(_dir[0], '__init__.py')):
+                yield _dir[0]
 
-class MyInstallData(install_data):
-    def run(self):
-        ## Needed for virtualenvs, where @prefix@/local/etc seems to not exist as a symlink, like the other dirs...
-        mkpath(p_join(_conf_prefix, project['name']))
-        install_data.run(self)
-        _regex_sub_lines(p_join(_conf_prefix, project['name'], project['name'] + '.conf'),
-          ('^ *basedir *:.*$',
-           'basedir: ' + config_values['base']),
-          ('^ *root *=.*$',
-           'root = %(basedir)s'),
-          ('^ *lib *=.*$',
-           'lib = ' + re.sub('^' + config_values['base'], '%(basedir)s', p_join(config_paths['purelib'], project['name']))),
-          ('^ *scripts *=.*$',
-           'scripts = ' + re.sub('^' + config_values['base'], '%(basedir)s', config_paths['scripts'])),
-          ('^ *run *=.*$',
-           'run = ' + re.sub('^' + config_values['base'], '%(basedir)s', p_join(config_values['base'], 'run', project['name']))),
-          ('^ *configs *=.*$',
-           'configs = ' + re.sub('^' + config_values['base'], '%(basedir)s', p_join(_conf_prefix, project['name']))),
-          ('^ *docs *=.*$',
-           'docs = ' + re.sub('^' + config_values['base'], '%(basedir)s', p_join(config_values['base'], 'share', 'doc', project['name']))))
+def _pkg_mappings(*args, **kws):
+    yield project['name'], 'lib'
+    for _dir in _find_dirs(*args, **kws):
+        if _dir != 'lib':
+            yield project['name'] + '.' + _dir[len('lib' + _dirsep):].replace(_dirsep, '.'), _dir # remove leading "lib/" and do s:/:.:g
 
 def _regex_sub_lines(file_path, *pat_subs):
     fh, abs_path = tempfile.mkstemp()
+    fcntl.lockf(fh, fcntl.LOCK_EX)
     with open(file_path, 'r') as old_file:
         with open(abs_path, 'w') as new_file:
+            fcntl.lockf(new_file, fcntl.LOCK_EX)
             for line in old_file.readlines():
                 line = line.rstrip('\r?\n')
                 for pattern, subst in pat_subs:
                     line = re.sub(pattern, subst, line)
                 new_file.write(line + '\n')
+    fcntl.lockf(fh, fcntl.LOCK_UN)
     os.close(fh)
     os.chmod(abs_path,os.stat(file_path)[0])
     os.remove(file_path)
     shutil.move(abs_path, file_path)
 
-def _files_glob(path, globs, on_sys_prefix=False, trim_prefix=False):
-    if on_sys_prefix:
-        leadpath = p_realpath(p_join(sys.prefix, path))
-    else:
-        leadpath = p_realpath(path)
-    result = []
-    for blob in globs:
-        tmp_result = glob.glob(p_join(leadpath, blob))
-        if trim_prefix:
-            result.extend(lambda x: x.lstrip(leadpath), tmp_result)
-        else:
-            result.extend(tmp_result)
-    return result
-
 def _read_file(file):
-    with open(p_realpath(p_join(p_dirname(__file__), file))) as f:
+    with open(file) as f:
         val = f.read()
     return val
 
 def _readlines_file_as_array(file):
-    with open(p_realpath(p_join(p_dirname(__file__), file))) as f:
-        arr = map(lambda x: x.rstrip('\n').rstrip('\r'), f.readlines())
+    with open(file) as f:
+        arr = [x.rstrip('\r?\n') for x in f.readlines()]
     return arr
 
-#def _readlines_file_as_dict(file):
-#    with open(p_realpath(p_join(p_dirname(__file__), file))) as f:
-#        dict = map(lambda x: x.rstrip('\n').rstrip('\r'), f.readlines())
-#        ...
-#    return dict
+def _readlines_file_as_dict(file):
+    return dict(x.split(' ', 1) for x in _readlines_file_as_array(file))
 
-def _set_from_file(file, dict, val, as_type):
+def _set_dict_from_file(file, _dict, val, as_type):
     if as_type == 'array':
-        dict[val] = _readlines_file_as_array(file)
-#    elif as_type == 'dict':
-#        dict[val] = _readlines_file_as_dict(file)
+        _dict[val] = _readlines_file_as_array(file)
+    elif as_type == 'dict':
+        _dict[val] = _readlines_file_as_dict(file)
     else:
-        dict[val] = _read_file(file)
+        _dict[val] = _read_file(file)
 
-def main():
-    _set_from_file('README.rst', METADATA, 'long_description', 'string')
-    _set_from_file('requirements.txt', METADATA, 'requires', 'array')
-## NB: Don't need setuptools for now, using distutils only
-#    _set_from_file('requirements.txt', SETUPTOOLS_METADATA, 'install_requires', 'array')
-#    _set_from_file('requirements_extra.txt', SETUPTOOLS_METADATA, 'extras_require', 'dict')
+## OVERRIDE CLASSES ##
+
+class MyInstallScripts(d_install_scripts):
+    def run(self):
+        d_install_scripts.run(self)
+        _regex_sub_lines(p_join(_configpaths['scripts'], project['name']),
+          ('^ *conf *=.*$',
+           '    conf = "' + p_join(_configprefix, project['name'], project['name'] + '.conf"')))
+
+class MyInstallData(d_install_data):
+    def run(self):
+        d_mkpath(p_join(_configprefix, project['name'])) #GOTCHA: needed for virtualenvs, @prefix@/etc sometimes doesn't exist (even as symlink)
+        d_install_data.run(self)
+        _regex_sub_lines(p_join(_configprefix, project['name'], project['name'] + '.conf'),
+          ('^ *basedir *:.*$',
+           'basedir: ' + _configvars['base']),
+          ('^ *root *=.*$',
+           'root = %(basedir)s'),
+          ('^ *lib *=.*$',
+           'lib = ' + re.sub('^' + _configvars['base'], '%(basedir)s', p_join(_configpaths['purelib'], project['name']))),
+          ('^ *scripts *=.*$',
+           'scripts = ' + re.sub('^' + _configvars['base'], '%(basedir)s', _configpaths['scripts'])),
+          ('^ *run *=.*$',
+           'run = ' + re.sub('^' + _configvars['base'], '%(basedir)s', p_join(_configvars['base'], 'run', project['name']))),
+          ('^ *configs *=.*$',
+           'configs = ' + re.sub('^' + _configvars['base'], '%(basedir)s', p_join(_configprefix, project['name']))),
+          ('^ *docs *=.*$',
+           'docs = ' + re.sub('^' + _configvars['base'], '%(basedir)s', p_join(_configvars['base'], 'share', 'doc', project['name']))))
+
+## MAIN ##
+
+if sys.argv[1] == 'macros':
+    if len(sys.argv) > 2 and sys.argv[2]:
+        project['version'] = sys.argv[2]
+    else:
+        #NB: default to bumping the version up by one patch level, e.g.: 0.1.2 -> 0.1.3
+        #    to bump a minor or major level, specify the version string manually as second arg instead
+        if project['repotype'] == 'git':
+            if not p_isdir('.git'):
+                sys.stderr.write("You tried to update version information but the repo files appear not to be in this directory.\n".format(project['repotype']))
+                sys.exit(1)
+            _projectversionstr = subprocess.Popen(['git describe --abbrev=0'], stdout=subprocess.PIPE, shell=True).communicate()[0].rstrip('\r?\n').split('.')
+        else:
+            sys.stderr.write("Repo type {} not implemented yet.\n".format(project['repotype']))
+            sys.exit(1)
+        project['version'] = '.'.join(map(str, _projectversionstr[:-1] + [_projectversionstr[-1] + 1]))
+    for file_to_expand in project['files_to_expand']:
+        file_to_expand = p_join('.', file_to_expand)
+        if p_isfile(file_to_expand + '.in'):
+            if p_isfile(file_to_expand) and p_getmtime(file_to_expand) > p_getmtime(file_to_expand + '.in'):
+                sys.stderr.write('WARNING: File to generate "{}" is already newer than input file "{}". "touch" the input file to override. Skipping.\n'.format(file_to_expand, file_to_expand + '.in'))
+            else:
+                with open(file_to_expand + '.in', 'r') as fh_in:
+                    file_content = fh_in.read().decode('utf-8')
+                for macro_to_replace in project['macros_to_replace']:
+                    file_content = re.sub('@' + macro_to_replace + '@', project[macro_to_replace], file_content)
+                with open(file_to_expand, 'w') as fh_out:
+                    fcntl.lockf(fh_out, fcntl.LOCK_EX)
+                    fh_out.write(file_content.encode('utf-8'))
+        else:
+            sys.stderr.write('WARNING: Specified file to expand "{}" does not have an input file "{}". Skipping.\n'.format(file_to_expand, file_to_expand + '.in'))
+else:
+    METADATA = {
+        'cmdclass': {"install_data": MyInstallData, "install_scripts": MyInstallScripts},
+        'name': str(project['name']), #GOTCHA: name must be a bytestring, even in unicode environment
+        'version': project['version'],
+        'provides': [project['name']],
+        'description': project['description'],
+        'author': project['author'],
+        'author_email': project['author_email'],
+        'scripts': _files_glob_l('bin', ('*',)),
+        'data_files': [
+            (p_join('share', 'doc', project['name']),
+                _files_glob_l('.', ('*.rst', '*.txt'), trim_prefix='.') +
+                _files_glob_l(p_join('doc','share'), ('*.rst', '*.txt', '*.pdf', '*.html'))),
+            (p_join('share', 'doc', project['name'], 'examples'),
+                _files_glob_l(p_join('doc', 'share', 'examples'), ('*.py', '*.sh'))),
+            (p_join(_configprefix, project['name']),
+                _files_glob_l(p_join('etc', project['name']), ('*.conf',))),
+        ],
+        'package_dir': dict(_pkg_mappings()),
+        'package_data': {},
+        'classifiers': project['classifiers'],
+        'keywords': project['keywords'],
+        'url': project['url_template'],
+        'download_url': project['download_url_template'],
+    }
+    for _val in 'license', 'py_modules', 'maintainer', 'maintainer_email', 'platforms':
+        if project[_val] is not None:
+            METADATA[_val] = project[_val]
+    for _man_section in xrange(1,9):
+        _these_files = _files_glob_l(p_join('doc', 'man'), ('*.' + unicode(_man_section),))
+        if _these_files:
+            METADATA['data_files'] += (p_join('share', 'man', 'man' + unicode(_man_section)), _these_files)
+    METADATA['packages'] = map(str, METADATA['package_dir'].keys())
+    for _dir in METADATA['package_dir']:
+        if p_isdir(p_join(METADATA['package_dir'][_dir], 'data')):
+            _these_files = _files_glob_l(p_join(METADATA['package_dir'][_dir], 'data'), ('*.rst', '*.txt', '*.pdf', '*.html'))
+            if _these_files:
+                METADATA['package_data'][_dir] = _these_files
+    for macro_to_expand in ['name', 'username', 'version', 'hosttype', 'repotype']:
+        METADATA['url'] = re.sub('@' + macro_to_expand + '@', project[macro_to_expand], METADATA['url'])
+        METADATA['download_url'] = re.sub('@' + macro_to_expand + '@', project[macro_to_expand], METADATA['download_url'])
+    _set_dict_from_file('README.rst', METADATA, 'long_description', 'string')
+    _set_dict_from_file('requirements.txt', METADATA, 'requires', 'array')
+
+#NB: Don't need setuptools for now, using distutils only, but if used it would need:
 #    try:
-#        from setuptools import setup #, find_packages - I do my own version of find_packages now
-#        SETUPTOOLS_METADATA['packages'] = find_packages(exclude=["*.test", "*.test.*", "test.*", "test"])
+#        from setuptools import setup #, find_packages #NB: I do my own version of find_packages now
+#        SETUPTOOLS_METADATA = {
+#            'packages': find_packages(exclude=["*.test", "*.test.*", "test.*", "test"]),
+#            'include_package_data': True,
+#            'zip_safe': False,
+#            'test_suite': '', #TODO:
+#            'entry_points': {}, #Not yet needed
+#        }
+#        _set_dict_from_file(....?, SETUPTOOLS_METADATA, 'install_requires', 'array')
+#        _set_dict_from_file('requirements_extra.txt', SETUPTOOLS_METADATA, 'extras_require', 'dict')
 #        METADATA.update(SETUPTOOLS_METADATA)
 #    except ImportError:
-#        from distutils.core import setup
 #        if sys.version < '2.2.3':
-#            from distutils.dist import DistributionMetadata
 #            DistributionMetadata.classifiers = None
 #            DistributionMetadata.download_url = None
-    from distutils.core import setup
+
     if sys.version < '2.2.3':
-        from distutils.dist import DistributionMetadata
         DistributionMetadata.classifiers = None
         DistributionMetadata.download_url = None
+
+#DEBUG: begin
+#    import pprint
+#    pp = pprint.PrettyPrinter(indent=4)
+#    pp.pprint(METADATA)
+#    exit(0)
+#DEBUG: end
+
     setup(**METADATA)
 
-#def _find_packages(incl_tests=False):
-#    for dir in glob.glob(p_join('lib','*')):
-#        if p_isdir(dir) and p_isfile(p_join(dir, '__init__.py')):
-#            if incl_tests or not (
-#                dir == 'test' or dir[-5:] == '.test' or dir[:5] == 'test.' or re.match('\.test\.', dir)):
-#                yield dir
-
-METADATA = {
-    'cmdclass': {"install_data": MyInstallData, "install_scripts": MyInstallScripts},
-    'name': project['name'],
-    'version': project['version'],
-    'provides': [project['name']],
-    'description': project['description'],
-    'author': project['author'],
-    'author_email': project['author_email'],
-    'license': project['license_text'],
-    'scripts': list(_files_glob('bin', ['*'])),
-#    'packages': list(_find_packages(incl_tests=False)),
-#    'package_data': {},
-    'packages': [project['name']],
-    'package_dir': {project['name']: 'lib'},
-    'data_files': [
-        (p_join('share', 'doc', project['name']), list(_files_glob('.', ['*.rst', '*.txt'])) + list(_files_glob(p_join('doc','share'), ['*.rst', '*.txt']))),
-        (p_join('share', 'doc', project['name'], 'examples'), list(_files_glob(p_join('doc', 'share', 'examples'), ['*.py', '*.sh']))),
-        (p_join(_conf_prefix, project['name']), list(_files_glob(p_join('etc', project['name']), ['*.conf'])))
-    ],
-    'classifiers': project['classifiers'],
-    'keywords': project['keywords'],
-#    'py_modules': [project['name']], ## For smaller non-package modules...
-#    'maintainer': '', ## Not yet needed
-#    'maintainer_email': '', ## Not yet needed
-#    'platforms': [], ## Not yet needed
-}
-METADATA['url'] = project['url_template']
-METADATA['download_url'] = project['downloadurl_template']
-for macro_to_expand in ['name', 'username', 'version', 'hosttype', 'repotype']:
-    METADATA['url'] = re.sub('@' + macro_to_expand + '@', project[macro_to_expand], METADATA['url'])
-    METADATA['download_url'] = re.sub('@' + macro_to_expand + '@', project[macro_to_expand], METADATA['download_url'])
-
-#SETUPTOOLS_METADATA = {
-#    'include_package_data': True,
-#    'zip_safe': False,
-#    'test_suite': '', ## TODO
-#    'entry_points': {}, ## Not yet needed
-#}
-
-if __name__ == '__main__':
-    main()
+sys.exit(0)

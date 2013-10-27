@@ -11,7 +11,7 @@ if __name__ == '__main__':
     ## edit this line if you wish to have a different fallback
     conf = '/usr/local/etc/gaidaros/gaidaros.conf'
     usage_text = """\
-Usage: run_gaidaros [OPTIONS]
+Usage: gaidaros [OPTIONS]
 
 OPTIONS:
  -c [] : Config file to source (str: default = None)

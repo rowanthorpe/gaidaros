@@ -6,7 +6,7 @@ TODO
 
 *Bracketed version numbers are intended milestones for each goal.*
 
-* bin/gaidaros.py & lib/gaidaros.py - IMPORTS:
+* bin/gaidaros & lib/gaidaros.py - IMPORTS:
 
  - [v0.4] signal (propagate interrupts), daemon, argparse (instead of getopt)
 
