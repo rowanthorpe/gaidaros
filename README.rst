@@ -11,7 +11,7 @@ out of the way unless requested.
 
 Its first iteration is presently in alpha phase (e.g.
 edge-triggered epoll only), but has a clear list of
-development milestones ahead. See the TODO.txt file for
+development milestones ahead. See the TODO.rst file for
 details.
 
 Gaidaros (Γάιδαρος) is Greek for donkey. I like donkeys.
