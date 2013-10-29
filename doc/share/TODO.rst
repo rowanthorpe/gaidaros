@@ -188,9 +188,10 @@ TODO
 
  - [v0.3.10]::
 
-     * "templatize" bin/gaidaros(.in) too
-     * be more explicit about socket "error" handling ("pass" on specific EWOULDBLOCK rather than all, etc)
-     * GC: cleanup zombie connections from connections list after a configurable timeout
+     * in testgaidaros.py run a client to do a request against a one-time handle action
+     * catch up CHANGES.txt file
+     * create pidfile in sys_run when ioloop starts, remove when it stops
+     * set configurable alarm-triggered reaper for zombie connections (GC) while ioloop runs
 
  - [v0.4]::
 

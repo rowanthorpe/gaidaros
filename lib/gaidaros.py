@@ -207,8 +207,6 @@ class Gaidaros(object):
         return sock, sock_fileno, epoll
 
     def ioloop(self, one_req=False):
-        #TODO: create pidfile in sys_run
-        #TODO: set alarm-triggered reaper for zombie connections (GC)
         ## initial state
         finished_accepting = False
         shutdown_wanted = False
@@ -248,13 +246,14 @@ class Gaidaros(object):
                         except socket.error, e:
                             if e.args[0] != errno.EWOULDBLOCK:
                                 raise
-                        #TODO: dispatch the following using threads, procs, pp, etc...
+                        ##NB: use of threads, procs, pp, etc... usefulness starts here
                         if self.end_request(requests[fileno]):
                             processing_request, requests[fileno] = self.split_request(requests[fileno])
                             responses[fileno], keepalive_flags[fileno] = self.encode_response(self.handle_request(processing_request))
                             if self.verbose:
                                 log('-' * 40, 'request: ' + processing_request, 'leftover-requests: ' + unicode(requests[fileno]))
                             epoll.modify(fileno, select.EPOLLOUT | select.EPOLLET)
+                        ## ...end ends about here
                     elif event & select.EPOLLOUT:
                         ## write data
                         try:
@@ -290,7 +289,6 @@ class Gaidaros(object):
                 epoll.close()
             if locals().has_key('sock'):
                 sock.close()
-            #TODO: remove pidfile from sys_run
 
     def handle(self):
         self.ioloop(one_req=True)

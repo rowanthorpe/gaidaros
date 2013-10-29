@@ -15,7 +15,7 @@ from __future__ import unicode_literals, with_statement
 # FIXME: Make macro expansion in "bin/XXXXXXX" file more explicit (at the moment is too intrusive)
 # FIXME: Generate project name from directory (even in virtualenv, pip, etc)
 # TODO: add logic for using more vars from projects[], e.g. package_data, etc
-# TODO: add more hosttypes
+# TODO: add more hosttypes to templates section
 # TODO: Recursive macro-expansion
 # TODO: Multiple authors -> iterable macros?
 # TODO: Add more license types, host types, repo types, etc
@@ -101,7 +101,6 @@ del sys.path[0]
 
 ## TEMPLATES ##
 
-#TODO: more hosttypes
 if project['hosttype'] == 'github':
     project['url_template'] = 'https://github.com/@username@/@name@'
     project['download_url_template'] = 'https://github.com/@username@/@name@/tarball/@version@'
@@ -287,14 +286,14 @@ else:
     _set_dict_from_file('README.rst', METADATA, 'long_description', 'string')
     _set_dict_from_file('requirements.txt', METADATA, 'requires', 'array')
 
-#NB: Don't need setuptools for now, using distutils only, but if used it would need:
+#NB: Don't need setuptools for now, using distutils only, but if used it would need something like:
 #    try:
 #        from setuptools import setup #, find_packages #NB: I do my own version of find_packages now
 #        SETUPTOOLS_METADATA = {
 #            'packages': find_packages(exclude=["*.test", "*.test.*", "test.*", "test"]),
 #            'include_package_data': True,
 #            'zip_safe': False,
-#            'test_suite': '', #TODO:
+#            'test_suite': '', #Not yet used
 #            'entry_points': {}, #Not yet needed
 #        }
 #        _set_dict_from_file(....?, SETUPTOOLS_METADATA, 'install_requires', 'array')
