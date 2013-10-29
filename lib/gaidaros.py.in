@@ -6,7 +6,6 @@ from __future__ import unicode_literals
 @description@
 """
 __version__ = '@version@'
-__all__ = (b'Gaidaros', b'usage', b'warn', b'die', b'log')
 
 import sys, os, ConfigParser, inspect, importlib, socket, select, errno, csv
 
