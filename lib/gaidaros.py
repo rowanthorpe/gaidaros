@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 """
 Async server micro-framework for control freaks
 """
-__version__ = '0.3.5'
+__version__ = '0.3.6'
 __all__ = (b'Gaidaros', b'usage', b'warn', b'die', b'log')
 
 import sys, os, ConfigParser, inspect, importlib, socket, select, errno, csv
