@@ -9,8 +9,7 @@ import sys, csv
 from getopt import getopt
 from gaidaros import *
 from gaidaros import __version__
-#TODO: make a .in file so this can be templated
-conf = '/usr/local/etc/gaidaros/gaidaros.conf'
+conf = @configfile@
 usage_text = """\
 Usage: gaidaros [OPTIONS] [--] [config-file]
 

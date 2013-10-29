@@ -1,3 +1,5 @@
+v0.3.x, ** TODO must catch this file up... **
+
 v0.2.x, ** TODO must catch this file up... **
 
 v0.2.0, 2013/04/17 -- Massive rewrite, more FHS directory structure, bug fixes, abstracted setup.py for reuse

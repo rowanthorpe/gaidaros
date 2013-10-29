@@ -187,8 +187,8 @@ class MyInstallScripts(d_install_scripts):
     def run(self):
         d_install_scripts.run(self)
         _regex_sub_lines(p_join(_configpaths['scripts'], project['name']),
-          (r'^( *)conf *=.*$',
-           r'\1conf = "' + p_join(_configprefix, project['name'], project['name'] + r'.conf"')))
+          (r'@configfile@',
+           '"' + p_join(_configprefix, project['name'], project['name'] + r'.conf"')))
 
 class MyInstallData(d_install_data):
     def run(self):
