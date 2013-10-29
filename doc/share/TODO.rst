@@ -188,6 +188,7 @@ TODO
 
  - [v0.3.10]::
 
+     * "templatize" bin/gaidaros(.in) too
      * be more explicit about socket "error" handling ("pass" on specific EWOULDBLOCK rather than all, etc)
      * GC: cleanup zombie connections from connections list after a configurable timeout
 

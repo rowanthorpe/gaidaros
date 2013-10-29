@@ -7,7 +7,7 @@ from __future__ import unicode_literals, with_statement
 #
 # See README.rst for more information.
 #
-# This setup.py and file hierarchy is from the setup-with-teeth project (v0.2.5):
+# This setup.py and file hierarchy is from the setup-with-teeth project (v0.2.6):
 #  https://github.com/rowanthorpe/setup-with-teeth
 #  replace all XXXXXXX with your own text
 
@@ -91,9 +91,10 @@ project = {
 
 #project['name'] = unicode(p_basename(_projectpath)) #FIXME: doesn't play nice with virtualenv
 project['name'] = 'gaidaros'
-sys.path.insert(0, p_join(_projectpath, 'lib'))
+if p_join(_projectpath, 'lib') not in sys.path:
+    sys.path.insert(0, p_join(_projectpath, 'lib'))
 project.update({
-    'files_to_expand': (p_join('lib', project['name'] + '.py'), 'README.rst'), #'MANIFEST.in',
+    'files_to_expand': (p_join('lib', project['name'] + '.py'), 'README.rst'),
     'version': getattr(importlib.import_module(project['name']), '__version__'),
 })
 del sys.path[0]
@@ -315,6 +316,10 @@ else:
 #    exit(0)
 #DEBUG: end
 
+    try:
+        os.remove('MANIFEST') #GOTCHA: if this is present it doesn't get overwritten from present data
+    except OSError:
+        pass
     setup(**METADATA)
 
 sys.exit(0)

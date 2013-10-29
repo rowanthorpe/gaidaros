@@ -1,119 +1,112 @@
 #!/usr/bin/env python
 # encoding: utf-8
-# from __future__ import unicode_literals
+from __future__ import unicode_literals
+if __name__ != '__main__':
+    raise RuntimeError('This script should only be run directly. It is not a library.')
 
-if __name__ == '__main__':
-    ## imports
-    import ConfigParser, sys, os, re, csv
-    from getopt import getopt
-    from gaidaros import *
-    from gaidaros import __version__
-    ## edit this line if you wish to have a different fallback
-    conf = '/usr/local/etc/gaidaros/gaidaros.conf'
-    usage_text = """\
-Usage: gaidaros [OPTIONS]
+## imports
+import sys, csv
+from getopt import getopt
+from gaidaros import *
+from gaidaros import __version__
+#TODO: make a .in file so this can be templated
+conf = '/usr/local/etc/gaidaros/gaidaros.conf'
+usage_text = """\
+Usage: gaidaros [OPTIONS] [--] [config-file]
 
 OPTIONS:
  -v    : Verbose output
  -c [] : Config file to source (str: default = """ + conf + """)
- -H [] : Host (str: default = '::')
- -p [] : Port (int: default = 8080)
- -i [] : Ip version (int: 0 = 'both', default = 0)
+ -H [] : Host (str)
+ -p [] : Port (int)
+ -i [] : Ip version (4/6/0, 0 = 'both')
  -4    : shortcut for "-i 4"
  -6    : shortcut for "-i 6"
- -b [] : Backlog queue size (int: default = 50)
- -t [] : poll Timeout in seconds (int: default = 1)
- -r [] : Recv size (int: default = 1024)
- -x [] : handler class name (str: default = <internal echo-handler>)
- -a [] : comma-separated list of handler class Args (array: default = [])
- -m [] : Module to load in order to find handler class (str: default = '')
- -h [] : handler Handle-request method name (str: default = 'handle_request')
- -e [] : handler End-of-request method name (str: default = 'end_request')
- -s [] : handler Split-request method name (str: default = 'split_request')
+ -b [] : Backlog queue size (int)
+ -t [] : poll Timeout in seconds (int)
+ -r [] : Recv size (int)
+ -m [] : Module to load in order to find handler class (str)
+ -x [] : handler class name (str)
+ -a [] : comma-separated list of handler class Args (str, csv of kev-val pairs)
+ -h [] : handler Handle-request method name or code (str)
+ -e [] : handler End-of-request method name or code (str)
+ -s [] : handler Split-request method name or code (str)
+ -d [] : handler Decode-request method name or code (str)
+ -E [] : handler Encode-response method name or code (str)
  -u    : this usage message
-"""
-    ## defs
-    def usage(ostream = sys.stderr):
-        ostream.write(usage_text)
-    ## preset vars
-    verbose = host = port = ip_version = backlog = poll_timeout = recv_size = handler_class = handler_class_args = handler_module = handle_request = end_request = split_request = None
-    ## parse opts
-    optlist, arguments = getopt(sys.argv[1:],'vc:H:p:i:46b:t:r:x:a:m:h:e:s:u')
-    ## get conf location from opts (shortcut to usage/exit if requested)
-    for switch, val in optlist:
-        if switch == '-c':
-            conf = val
-        if switch == '-u':
-            usage(ostream = sys.stdout)
-            sys.exit(0)
-    if conf:
-        ## source conf to get lib location
-        cnf = ConfigParser.ConfigParser()
-        cnf.MAX_INTERPOLATION_DEPTH = 3
-        cnf_fp = open(os.path.expanduser(conf))
-        cnf.readfp(cnf_fp)
-        cnf_fp.close()
-        sys_path = cnf.get('dir', 'lib')
-        if sys_path:
-            sys.path.insert(0, os.path.expanduser(sys_path))
-    usage_text += """
+
+Commandline interface to the gaidaros lib. Values' defaults are set by the
+config file.
+
 VERSION:
 {}
 """.format(__version__)
-    ## getopts
-    try:
-        for switch, val in optlist:
-            if switch == '-v':
-                verbose = True
-            elif switch == '-c':
-                pass # already set
-            elif switch == '-H':
-                host = val
-            elif switch == '-p':
-                port = int(val)
-            elif switch == '-i':
-                ip_version = int(val)
-            elif switch == '-4':
-                ip_version = 4
-            elif switch == '-6':
-                ip_version = 6
-            elif switch == '-b':
-                backlog = int(val)
-            elif switch == '-t':
-                poll_timeout = int(val)
-            elif switch == '-r':
-                recv_size = int(val)
-            elif switch == '-x':
-                handler_class = val
-            # Initial backslash-expanding allows for easily embeding other codes
-            # (like '\\n' => [newline], '\\\\n' => '\\n')
-            elif switch == '-a':
-                handler_class_args = list(
-                    *csv.reader([str(val)], skipinitialspace = True, quoting = csv.QUOTE_NONE, escapechar = '\\')
-                )
-            elif switch == '-m':
-                handler_module = val
-            elif switch == '-h':
-                handle_request = val
-            elif switch == '-e':
-                end_request = val
-            elif switch == '-s':
-                split_request = val
-            elif switch == '-u':
-                raise NameError('This line should never be reached (-u a=should have caused an exit earlier)!')
-    except StandardError as e:
-        die(warning='Problem setting values from options', stack=e, usage_func=usage)
-    ## initiate server
-    try:
-        server = Gaidaros(
-            verbose=verbose, conf=conf, host=host, port=port, ip_version=ip_version, \
-            backlog=backlog, poll_timeout=poll_timeout, recv_size=recv_size, \
-            handler_class=handler_class, handler_class_args=handler_class_args, handler_module=handler_module, \
-            handle_request=handle_request, end_request=end_request, split_request=split_request)
-    except StandardError as e:
-        die(warning='Problem instantiating server', stack=e, usage_func=usage)
-    ## run server
-    try:
-        server.serve()
-    except StandardError as e:
-        die(warning='Problem running server', stack=e)
+## defs
+def usage(ostream=sys.stderr):
+    ostream.write(usage_text)
+## preset vars
+verbose = host = port = ip_version = backlog = poll_timeout = recv_size = handler_module = handler_class = handler_class_args = handle_request = end_request = split_request = decode_request = encode_response = None
+## parse opts
+optlist, arguments = getopt(sys.argv[1:],'uvc:H:p:i:46b:t:r:m:x:a:h:e:s:d:E:')
+## getopts
+try:
+    for switch, val in optlist:
+        if switch == '-u':
+            usage(ostream = sys.stdout)
+            sys.exit(0)
+        elif switch == '-v':
+            verbose = True
+        elif switch == '-c':
+            conf = val
+        elif switch == '-H':
+            host = val
+        elif switch == '-p':
+            port = int(val)
+        elif switch == '-i':
+            ip_version = int(val)
+        elif switch == '-4':
+            ip_version = 4
+        elif switch == '-6':
+            ip_version = 6
+        elif switch == '-b':
+            backlog = int(val)
+        elif switch == '-t':
+            poll_timeout = int(val)
+        elif switch == '-r':
+            recv_size = int(val)
+        elif switch == '-m':
+            handler_module = val
+        elif switch == '-x':
+            handler_class = val
+        elif switch == '-a':
+            handler_class_args = list(
+              *csv.reader([val.replace('\n','')], skipinitialspace = True, quoting = csv.QUOTE_NONE))
+        elif switch == '-h':
+            handle_request = val
+        elif switch == '-e':
+            end_request = val
+        elif switch == '-s':
+            split_request = val
+        elif switch == '-d':
+            decode_request = val
+        elif switch == '-E':
+            encode_response = val
+except StandardError as e:
+    die(warning='Problem setting values from options', stack=e)
+if arguments:
+    conf = arguments[0]
+## initiate server
+try:
+    server = Gaidaros(
+      verbose=verbose, conf=conf, host=host, port=port, ip_version=ip_version, \
+      backlog=backlog, poll_timeout=poll_timeout, recv_size=recv_size, \
+      handler_module=handler_module, handler_class=handler_class, handler_class_args=handler_class_args, \
+      handle_request=handle_request, end_request=end_request, split_request=split_request, \
+      decode_request=decode_request, encode_response=encode_response)
+except StandardError as e:
+    die(warning='Problem instantiating server', stack=e)
+## run server
+try:
+    server.serve()
+except StandardError as e:
+    die(warning='Problem running server', stack=e)
