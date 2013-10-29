@@ -4,7 +4,7 @@ TODO
 
 *See sample code at http://code.activestate.com/recipes/574454-thread-pool-mixin-class-for-use-with-socketservert for threadpools*
 
-*Bracketed version numbers are intended milestones for each goal.*
+*Bracketed version numbers are intended milestones for each goal*
 
 * bin/gaidaros & lib/gaidaros.py - IMPORTS:
 
@@ -188,6 +188,7 @@ TODO
 
  - [v0.3.10]::
 
+     * (carefully) remove/gitignore-hide files which are generated from .in files (e.g. lib/gaidaros.py...)
      * in testgaidaros.py run a client to do a request against a one-time handle action
      * catch up CHANGES.txt file
      * create pidfile in sys_run when ioloop starts, remove when it stops
