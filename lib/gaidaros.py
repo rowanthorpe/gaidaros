@@ -52,8 +52,8 @@ class Gaidaros(object):
         }
         for _prockey in list(_proc): # must not lazy-evaluate as we are changing the dict in the loop
             _proc[_prockey + '_name'] = None
-        conf = unicode(conf)
         if conf:
+            conf = unicode(conf)
             ## source conf for default settings
             self.cnf = ConfigParser.ConfigParser()
             self.cnf.MAX_INTERPOLATION_DEPTH = 3
