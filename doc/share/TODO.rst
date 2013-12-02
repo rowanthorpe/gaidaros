@@ -186,7 +186,7 @@ TODO
 
 * OTHER:
 
- - [v0.3.11]::
+ - [v0.3.12]::
 
      * use ConfigParser correctly (and then remove all the redundant "defaults" code)
      * perhaps create reusable internal socket pool rather than tearing down and rebuilding each (will

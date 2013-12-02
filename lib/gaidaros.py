@@ -14,7 +14,7 @@
 """
 Async server micro-framework for control freaks
 """
-__version__ = '0.3.10'
+__version__ = '0.3.11'
 
 import sys, os, ConfigParser, inspect, importlib, socket, select, errno, csv
 try:
