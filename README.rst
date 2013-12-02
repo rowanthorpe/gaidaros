@@ -46,7 +46,7 @@ Features
   use threads, greenthreads, multiprocesses, or pools
   thereof too
 
-* IPv4 and/or IPv6, *TODO*: SSL, etc
+* IPv4 and/or IPv6, SSL (TLSv1) or not
 
 * TCP, *TODO*: UDP, unixsocket, etc
 
@@ -85,7 +85,7 @@ From latest released tarball
 
 ::
 
-    $ wget --no-check-certificate https://github.com/rowanthorpe/gaidaros/tarball/0.3.8
+    $ wget --no-check-certificate https://github.com/rowanthorpe/gaidaros/tarball/0.3.9
 
 
 Build Status

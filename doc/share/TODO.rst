@@ -72,12 +72,12 @@ TODO
    -Y
       Run profiling
 
-   -Z
+   -Q
       Run tests from docstrings
 
  - [v2.0]
 
-   -z arg
+   -q arg
       Compress streams with (str)
          * "none"
          * "zlib"
@@ -188,6 +188,14 @@ TODO
 
  - [v0.3.10]::
 
+     * use ConfigParser correctly (and then remove all the redundant "defaults" code)
+     * perhaps create reusable internal socket pool rather than tearing down and rebuilding each (will
+       especially speed up SSL)
+     * handle more wrap_socket options like do_handshake_on_connect=, suppress_ragged_eofs=, ciphers=, etc
+     * perhaps (do all init in __new__?) and set all values in __slots__ rather than __dict__, for speedup?
+     * check if sets or lists(?!) are possible and faster than dicts for storing requests, etc
+     * use setting ONESHOT for epoll rather than tracking a one_req var (oneclient -> ONESHOT on the listener,
+       onequery -> ONESHOT on each spawned connection)
      * (carefully) remove/gitignore-hide files which are generated from .in files (e.g. lib/gaidaros.py...)
      * in testgaidaros.py run a client to do a request against a one-time handle action
      * catch up CHANGES.txt file
@@ -200,11 +208,13 @@ TODO
 
  - [v0.5]::
 
-     * allow config to chain-source configs (limited functionality and locations though, so user can't hijack the system).
+     * allow config to chain-source configs (limited functionality and locations though, so user can't hijack
+       the system).
 
  - [v2.5]::
 
-     * run proper benchmark tests to compare to leading async servers, then profile loops, etc. Based on that use cython syntax to speed things up.
+     * run proper benchmark tests to compare to leading async servers, then profile loops, etc. Based on that
+       use cython syntax to speed things up.
 
  - [v3.0]::
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-# encoding: utf-8
-from __future__ import unicode_literals
+# -*- coding: utf-8 -*-
+
 from gaidaros import Gaidaros
 
 server = Gaidaros()

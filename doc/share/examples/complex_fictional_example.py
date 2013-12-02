@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-# encoding: utf-8
-from __future__ import unicode_literals
+# -*- coding: utf-8 -*-
+
 from gaidaros import Gaidaros
 
 #NB: this is deliberately not functional, it just shows different syntax possibilities within the same file
@@ -19,5 +19,6 @@ server = Gaidaros(
     handler_module = mymodule,            # This is an already sourced/defined object, to be accessed directly.
     handle_request = 'handle_request'     # This names the function by string, which is looked for as mymodule.handle_request (or just handle_request, if module unspecified)
     end_request = lambda x: '[separator]' in x,  # This defines a callable inline, which will be used directly
+    use_ssl = False,
 )
 server.serve()

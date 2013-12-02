@@ -1,5 +1,6 @@
 #/usr/bin/env python
-# encoding: utf-8
+# -*- coding: utf-8 -*-
+
 from __future__ import unicode_literals, with_statement
 
 '''Setup and build script for Gaidaros.'''
@@ -149,7 +150,7 @@ def _regex_sub_lines(file_path, *pat_subs):
         with open(abs_path, 'w') as new_file:
             fcntl.lockf(new_file, fcntl.LOCK_EX)
             for line in old_file.readlines():
-                line = line.rstrip('\r?\n')
+                line = line.rstrip('\r\n')
                 for pattern, subst in pat_subs:
                     line = re.sub(pattern, subst, line)
                 new_file.write(line + '\n')
@@ -166,7 +167,7 @@ def _read_file(file):
 
 def _readlines_file_as_array(file):
     with open(file) as f:
-        arr = [x.rstrip('\r?\n') for x in f.readlines()]
+        arr = [x.rstrip('\r\n') for x in f.readlines()]
     return arr
 
 def _readlines_file_as_dict(file):

@@ -1,13 +1,27 @@
 #!/usr/bin/env python
-# encoding: utf-8
-from __future__ import unicode_literals
+# -*- coding: utf-8 -*-
+
+#NB: "unicode" introduces more problems than it solves, if we want to also be able to
+#    handle arbitrary binary data "strings" (which often don't have a unicode
+#    representation). For that reason we now only use binstrings, and the handler has
+#    to deal with it explicitly if you want it. Even if you override decode_request()
+#    and encode_response() to decode to Python's "unicode" in the handler, don't be
+#    tempted to pass back u'' instead of b'', it will throw a TypeError. Do the
+#    b'' -> u'' inside handle_request() (and maybe end_request() and split_request())
+#    if you really need it, but it *will* slow things down. My tests instantly started
+#    serving five times faster when I removed the redundant UTF-8 -> unicode() logic...
 
 """
 Async server micro-framework for control freaks
 """
-__version__ = '0.3.8'
+__version__ = '0.3.9'
 
 import sys, os, ConfigParser, inspect, importlib, socket, select, errno, csv
+try:
+    import ssl
+    has_ssl = True
+except ImportError:
+    has_ssl = False
 
 def _print_nl(data, ostream=sys.stdout):
     ostream.write(data + ('\n', '')[data[-1:] == '\n'])
@@ -37,9 +51,11 @@ def log(*args):
 class Gaidaros(object):
 
     _globals = globals()
-
+    
     def __init__(self, verbose=None, conf=None, host=None, port=None, ip_version=None, \
                  backlog=None, poll_timeout=None, recv_size=None, \
+                 use_ssl=None, ssl_certfile=None, ssl_keyfile=None, \
+                 ssl_cert_reqs=None, ssl_ca_certs=None, ssl_version=None, die_on_error=None, \
                  handler_class=None, handler_class_args=None, handler_module=None, \
                  handle_request=None, end_request=None, split_request=None, \
                  decode_request=None, encode_response=None):
@@ -50,10 +66,10 @@ class Gaidaros(object):
             'decode_request': decode_request,
             'encode_response': encode_response,
         }
-        for _prockey in list(_proc): # must not lazy-evaluate as we are changing the dict in the loop
+        for _prockey in _proc.keys(): # eager-evaluate as we are changing the dict in the loop
             _proc[_prockey + '_name'] = None
         if conf:
-            conf = unicode(conf)
+            conf = str(conf)
             ## source conf for default settings
             self.cnf = ConfigParser.ConfigParser()
             self.cnf.MAX_INTERPOLATION_DEPTH = 3
@@ -78,6 +94,20 @@ class Gaidaros(object):
                 poll_timeout = self.cnf.getint('parameter', 'poll_timeout')
             if recv_size is None:
                 recv_size = self.cnf.getint('parameter', 'recv_size')
+            if use_ssl is None:
+                use_ssl = self.cnf.getboolean('parameter', 'use_ssl')
+            if ssl_certfile is None:
+                ssl_certfile = self.cnf.get('parameter', 'ssl_certfile')
+            if ssl_keyfile is None:
+                ssl_keyfile = self.cnf.get('parameter', 'ssl_keyfile')
+            if ssl_cert_reqs is None:
+                ssl_cert_reqs = self.cnf.getint('parameter', 'ssl_cert_reqs')
+            if ssl_ca_certs is None:
+                ssl_ca_certs = self.cnf.get('parameter', 'ssl_ca_certs')
+            if ssl_version is None:
+                ssl_version = self.cnf.get('parameter', 'ssl_version')
+            if die_on_error is None:
+                die_on_error = self.cnf.getboolean('parameter', 'die_on_error')
             if handler_module is None:
                 handler_module = self.cnf.get('handler', 'module')
             if handler_class is None:
@@ -91,18 +121,31 @@ class Gaidaros(object):
         ## set the defaults not specified in the conf
         if verbose in (None, ''):
             verbose = False
-        if host in (None, ''):
-            host = '::'
         if port in (None, ''):
             port = 8080
         if ip_version in (None, ''):
             ip_version = 0
+        if host in (None, ''):
+            if ip_version in (0, 6):
+                host = '::'
+            else:
+                host = '0.0.0.0'
         if backlog in (None, ''):
             backlog = 50
         if poll_timeout in (None, ''):
             poll_timeout = 1
         if recv_size in (None, ''):
             recv_size = 1024
+        if use_ssl in (None, ''):
+            use_ssl = False
+        if ssl_cert_reqs in (None, ''):
+            ssl_cert_reqs = ssl.CERT_NONE
+        if ssl_ca_certs in (None, ''):
+            ssl_ca_certs = '/etc/ca-certificates.conf' # Debian default location
+        if ssl_version in (None, ''):
+            ssl_version = ssl.PROTOCOL_TLSv1
+        if die_on_error in (None, ''):
+            die_on_error = True
         if handler_module in (None, ''):
             handler_module_name = ''
             handler_module = None
@@ -119,7 +162,7 @@ class Gaidaros(object):
             handler_class = None
             handler_class_args = ()
         elif isinstance(handler_class, basestring):
-            handler_class_name = unicode(handler_class)
+            handler_class_name = str(handler_class)
             if handler_module is not None and hasattr(handler_module, handler_class_name) and inspect.isclass(getattr(handler_module, handler_class_name)):
                 handler_class = getattr(handler_module, handler_class_name)
             elif self._globals.has_key(handler_class_name) and inspect.isclass(eval(handler_class_name)):
@@ -128,41 +171,46 @@ class Gaidaros(object):
                 raise ValueError('handler_class is not the name of a valid class. It is: {}'.format(handler_class_name))
         elif inspect.isclass(handler_class):
             if handler_class_name in (None, ''):
-                handler_class_name = unicode(handler_class.__name__)
+                handler_class_name = str(handler_class.__name__)
         else:
             raise TypeError('handler_class is not a valid class. It is: {} (type {})'.format(handler_class, type(handler_class)))
         for _prockey in _proc:
             if _prockey[-5:] != '_name' and _proc[_prockey] in (None, ''):
                 _proc[_prockey] = _prockey
+        if use_ssl and not has_ssl:
+            raise NotImplementedError('use_ssl specified but ssl module not available or usable')
         ## set long-lived vars including handler instance
-        self.verbose = verbose
-        self.host = host
-        self.port = port
-        self.ip_version = ip_version
-        self.backlog = backlog
-        self.poll_timeout = poll_timeout
-        self.recv_size = recv_size
+        for x in 'verbose', 'host', 'port', 'ip_version', 'backlog', 'poll_timeout', \
+                 'recv_size', 'use_ssl', 'ssl_certfile', 'ssl_keyfile', 'ssl_cert_reqs', \
+                 'ssl_ca_certs', 'ssl_version', 'die_on_error':
+            setattr(self, x, locals()[x])
+        # POSIX.1-2001 allows either error, and doesn't require them to have same value,
+        # so check for both (merging identical integers if any, too).
+        if use_ssl:
+            self.ssl_wouldblock_errors = tuple(frozenset((ssl.SSL_ERROR_WANT_READ, ssl.SSL_ERROR_WANT_WRITE)))
+        self.socket_wouldblock_errors = tuple(frozenset((errno.EWOULDBLOCK, errno.EAGAIN)))
         if handler_class is None:
             self.handler = None
         else:
             self.handler = handler_class(*handler_class_args)
-        # the following looped code is perverse but saves a *lot* of duplicated code
-        # (more than 100 lines of "pythonic" code)
+        # The following looped code is perverse but saves more than 100 lines of "pythonic"
+        # (and less DRY) code
         _routine_defaults = {
-            'end_request': lambda request: '\n' in request,
-            'split_request': lambda request: (
-              [_splitpoint for _splitpoint in (request.find('\n') + 1,)],
-              [_trailing for _trailing in (_splitpoint - 1 < len(request),)],
-              ((request,''),(request[:_splitpoint],request[_splitpoint:]))[_trailing],
+            'end_request': lambda _request: '\n' in _request,
+            'split_request': lambda _request: (
+              [_splitpoint for _splitpoint in (_request.find('\n') + 1,)],
+              [_trailing for _trailing in (_splitpoint - 1 < len(_request),)],
+              ((_request,''),(_request[:_splitpoint],_request[_splitpoint:]))[_trailing],
             )[-1],
-            'handle_request': lambda request: (request, False),
-            'decode_request': lambda request: request.decode('utf-8'),
-            'encode_response': lambda response: (response[0].encode('utf-8'), response[1]),
+            'handle_request': lambda _request: (_request, False),
+            # See note at top of script. Now not doing "decoding" from utf8 for that reason.
+            'decode_request': lambda _request: _request,
+            'encode_response': lambda _response: _response, # Remember _response is: tuple(data, keepalive_flag)
         }
         for _routine in 'end_request', 'split_request', 'handle_request', 'decode_request', 'encode_response':
             if _proc.has_key(_routine):
                 if isinstance(_proc[_routine], basestring):
-                    _proc.update({_routine + '_name': unicode(_proc[_routine])})
+                    _proc.update({_routine + '_name': str(_proc[_routine])})
                     if self.handler and hasattr(self.handler, _proc[_routine + '_name']) and inspect.method(getattr(self.handler, _proc[_routine + '_name'])):
                         _proc.update({_routine: getattr(self.handler, _proc[_routine + '_name'])})
                     elif self._globals.has_key(_proc[_routine + '_name']) and inspect.isroutine(self._globals[_proc[_routine + '_name']]):
@@ -179,14 +227,14 @@ class Gaidaros(object):
                             raise ValueError('{} is not the name of a valid method or function, and doesn\'t look like a valid lambda. It is: {}'.format(_routine, _proc[_routine + '_name']))
                 elif inspect.isroutine(_proc[_routine]):
                     if _proc[_routine + '_name'] in (None, ''):
-                        _proc.update({_routine + '_name': unicode(_proc[_routine].__name__)})
+                        _proc.update({_routine + '_name': str(_proc[_routine].__name__)})
                 else:
                     raise TypeError('{} is not a valid function or method. It is: {}'.format(_routine, _proc[_routine]))
         for _prockey in _proc:
             setattr(self, _prockey, _proc[_prockey])
 
     def _setup(self):
-        ## setup socket - ip version(s), host, port, backlog
+        ## setup socket - ip version(s), host, port, backlog, ssl_opts
         if self.ip_version == 4:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         else:
@@ -200,6 +248,10 @@ class Gaidaros(object):
         sock.listen(self.backlog)
         sock.setblocking(0)
         sock_fileno = sock.fileno()
+        if self.use_ssl:
+            self.ssl_opts = {'server_side': True, 'certfile': self.ssl_certfile, 'cert_reqs': self.ssl_cert_reqs, 'ca_certs': self.ssl_ca_certs, 'ssl_version': self.ssl_version}
+            if self.ssl_keyfile is not None:
+                self.ssl_opts.update({'keyfile': self.ssl_keyfile})
         ## setup poller
         epoll = select.epoll()
         epoll.register(sock_fileno, select.EPOLLIN | select.EPOLLET)
@@ -209,86 +261,163 @@ class Gaidaros(object):
         ## initial state
         finished_accepting = False
         shutdown_wanted = False
-        response  = b''
+        response  = ''
         connections = {}
         requests = {}
+        dec_requests = {}
         responses = {}
         keepalive_flags = {}
-        ## setup socket and poller
         sock, sock_fileno, epoll = self._setup()
+        ## link directly to remaining self-vars from locals to avoid lookups and speedup the loop
+        use_ssl = self.use_ssl
+        poll_timeout = self.poll_timeout
+        recv_size = self.recv_size
+        verbose = self.verbose
+        end_request = self.end_request
+        handle_request = self.handle_request
+        split_request = self.split_request
+        decode_request = self.decode_request
+        encode_response = self.encode_response
+        e_register = epoll.register
+        e_unregister = epoll.unregister
+        e_modify = epoll.modify
+        e_poll = epoll.poll
+        e_close = epoll.close
+        s_accept = sock.accept
+        s_close = sock.close
+        sel_EPOLLIN = select.EPOLLIN
+        sel_EPOLLOUT = select.EPOLLOUT
+        sel_EPOLLET = select.EPOLLET
+        sel_EPOLLHUP = select.EPOLLHUP
+        s_error = socket.error
+        s_wouldblock_errors = self.socket_wouldblock_errors
+        if use_ssl:
+            ssl_opts = self.ssl_opts
+            ssl_wrap_socket = ssl.wrap_socket
+            ssl_error = ssl.SSLError
+            _wouldblock_errors = self.ssl_wouldblock_errors
+        else:
+            _wouldblock_errors = s_wouldblock_errors
+        die_on_error = self.die_on_error
+        if die_on_error:
+            if use_ssl:
+                _sock_error = ssl_error
+            else:
+                _sock_error = s_error
+        else:
+            _sock_error = Exception
+        ## this whole loop is not very DRY because I have "unrolled" it a bit, on purpose, for speed
         try:
             ## main polling loop
             while not shutdown_wanted:
-                events = epoll.poll(self.poll_timeout)
-                for fileno, event in events:
-                    if fileno == sock_fileno and not finished_accepting:
-                        ## accept new connection (only once if requested)
-                        try:
-                            while not finished_accepting:
-                                connection, address = sock.accept()
-                                if one_req:
-                                    finished_accepting = True
-                        except socket.error, e:
-                            if e.args[0] != errno.EWOULDBLOCK:
-                                raise
-                        connection.setblocking(0)
-                        connection_fileno = connection.fileno()
-                        epoll.register(connection_fileno, select.EPOLLIN | select.EPOLLET)
-                        connections[connection_fileno] = connection
-                        requests[connection_fileno] = b''
-                        responses[connection_fileno] = response
-                        keepalive_flags[connection_fileno] = False
-                    elif event & select.EPOLLIN:
-                        ## read data
-                        try:
-                            requests[fileno] += self.decode_request(connections[fileno].recv(self.recv_size))
-                        except socket.error, e:
-                            if e.args[0] != errno.EWOULDBLOCK:
-                                raise
-                        ##NB: use of threads, procs, pp, etc... usefulness starts here
-                        if self.end_request(requests[fileno]):
-                            processing_request, requests[fileno] = self.split_request(requests[fileno])
-                            responses[fileno], keepalive_flags[fileno] = self.encode_response(self.handle_request(processing_request))
-                            if self.verbose:
-                                log('-' * 40, 'request: ' + processing_request, 'leftover-requests: ' + unicode(requests[fileno]))
-                            epoll.modify(fileno, select.EPOLLOUT | select.EPOLLET)
-                        ## ...end ends about here
-                    elif event & select.EPOLLOUT:
-                        ## write data
-                        try:
-                            while len(responses[fileno]) > 0:
-                                byteswritten = connections[fileno].send(responses[fileno])
-                                responses[fileno] = responses[fileno][byteswritten:]
-                        except socket.error, e:
-                            if e.args[0] != errno.EWOULDBLOCK:
-                                raise
-                        if len(responses[fileno]) == 0:
-                            if keepalive_flags[fileno]:
-                                epoll.modify(fileno, select.EPOLLIN | select.EPOLLET)
-                            else:
-                                epoll.modify(fileno, select.EPOLLET)
-                                connections[fileno].shutdown(socket.SHUT_RDWR)
-                                if one_req:
-                                    ## if only once then force closing connection
-                                    epoll.unregister(fileno)
+                events = e_poll(poll_timeout)
+                while events:
+                    # Iterate through events list until it's empty, iterate backwards so removing items doesn't cause skips
+                    for indexno in xrange(len(events) - 1, -1, -1):
+                        fileno, event = events[indexno]
+                        if fileno == sock_fileno:
+                            ## accept new connection
+                            if not finished_accepting:
+                                try:
+                                    connection, address = s_accept()
+                                    if use_ssl:
+                                        connection = ssl_wrap_socket(connection, **ssl_opts)
+                                    connection.setblocking(0)
+                                    connection_fileno = connection.fileno()
+                                    e_register(connection_fileno, sel_EPOLLIN | sel_EPOLLET)
+                                except (socket.error, ssl.SSLError) as e: # catch both types here
+                                    if die_on_error:
+                                        raise
+                                    if one_req:
+                                        shutdown_wanted = True
+                                else:
+                                    if one_req:
+                                        finished_accepting = True
+                                    connections[connection_fileno] = connection
+                                    requests[connection_fileno] = ''
+                                    dec_requests[connection_fileno] = ''
+                                    responses[connection_fileno] = response
+                                    keepalive_flags[connection_fileno] = False
+                                    if verbose:
+                                        log('=' * 40, 'setup socket ' + str(connection_fileno))
+                        else:
+                            try:
+                                if event & sel_EPOLLIN:
+                                    try:
+                                        ## read data
+                                        requests[fileno] += connections[fileno].recv(recv_size) # don't decode yet (see explanation below)
+                                    except _sock_error as e:
+                                        if e.args[0] in _wouldblock_errors:
+                                            pass
+                                    ## process request
+                                    try:
+                                        dec_requests[fileno] += decode_request(requests[fileno])
+                                        requests[fileno] = ''
+                                    except ValueError:
+                                        # Capture decoding exceptions in case decoding a partial chunk would bork (e.g. on a multibyte
+                                        # character split across a read boundary) but a valid request is contained in the beginning of
+                                        # the data. Hope that eventually there will be a non-erroring chunk of data to decode...
+                                        pass
+                                    else:
+                                        if end_request(dec_requests[fileno]):
+                                            processing_request, dec_requests[fileno] = split_request(dec_requests[fileno])
+                                            responses[fileno], keepalive_flags[fileno] = encode_response(handle_request(processing_request))
+                                            e_modify(fileno, sel_EPOLLOUT | sel_EPOLLET)
+                                            if verbose:
+                                                log('-' * 40,
+                                                    'processed response for socket ' + str(fileno),
+                                                    ' decoded request: ' + repr(processing_request),
+                                                    ' encoded response: ' + repr(responses[fileno]),
+                                                    ' decoded leftovers: ' + repr(dec_requests[fileno]),
+                                                    ' other leftovers: ' + repr(requests[fileno]))
+                                elif event & sel_EPOLLOUT:
+                                    ## write data
+                                    try:
+                                        while len(responses[fileno]) != 0:
+                                            byteswritten = connections[fileno].send(responses[fileno])
+                                            responses[fileno] = responses[fileno][byteswritten:]
+                                    except _sock_error as e:
+                                        if e.args[0] in _wouldblock_errors:
+                                            pass
+                                    else:
+                                        if keepalive_flags[fileno]:
+                                            e_modify(fileno, sel_EPOLLIN | sel_EPOLLET)
+                                        else:
+                                            e_unregister(fileno)
+                                            connections[fileno].close()
+                                            del connections[fileno], requests[fileno], dec_requests[fileno], responses[fileno], keepalive_flags[fileno]
+                                            if one_req:
+                                                shutdown_wanted = True
+                                        if verbose:
+                                            log('-' * 40, 'response output to socket ' + str(fileno))
+                                elif event & sel_EPOLLHUP:
+                                    ## hangup
+                                    if verbose:
+                                        log('-' * 40, 'hanging up socket ' + str(fileno))
+                                    e_unregister(fileno)
                                     connections[fileno].close()
-                                    del connections[fileno]
+                                    del connections[fileno], requests[fileno], dec_requests[fileno], responses[fileno], keepalive_flags[fileno]
+                                    if one_req:
+                                        shutdown_wanted = True
+                            except Exception as e:
+                                if die_on_error:
+                                    raise
+                                e_unregister(fileno)
+                                connections[fileno].close()
+                                del connections[fileno], requests[fileno], dec_requests[fileno], responses[fileno], keepalive_flags[fileno]
+                                if one_req:
                                     shutdown_wanted = True
-                    elif event & select.EPOLLHUP:
-                        ## finish connection
-                        epoll.unregister(fileno)
-                        connections[fileno].close()
-                        del connections[fileno]
-                        if one_req:
-                            shutdown_wanted = True
+                        del events[indexno]
         finally:
-            ## close server
-            if locals().has_key('epoll'):
-                epoll.unregister(sock_fileno)
-                epoll.close()
-            if locals().has_key('sock'):
-                sock.close()
-
+            ## cleanup leftover connections
+            for fileno in connections.keys(): # eager evaluate
+                e_unregister(fileno)
+                connections[fileno].close()
+            ## unregister and close server
+            e_unregister(sock_fileno)
+            e_close()
+            s_close()
+    
     def handle(self):
         self.ioloop(one_req=True)
 
@@ -297,8 +426,8 @@ class Gaidaros(object):
 
 if __name__ == '__main__':
     # If executed directly this runs as a minimal one-line echo server (with
-    # LF end-of-lines, listening on all interfaces, port 8080, IPv4 & IPv6,
-    # with UTF-8 decoding and encoding, with no keepalive or logging to
-    # console) in a loop until interrupted (by keyboard or signal).
+    # only LF end-of-lines, listening on all interfaces, port 8080, IPv4 & IPv6,
+    # with no decoding or encoding, with no keepalive or logging to console) in
+    # a loop until interrupted (by keyboard or signal).
     server = Gaidaros()
     server.serve()
