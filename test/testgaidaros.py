@@ -16,18 +16,12 @@ def tests():
         srv.serve()
 
     _patt = re.compile(r'@HostName@')
-    hostname = sock.getfqdn()
-    altname = None
-    if len(hostname) > 64:
-        altname = "DNS:" + hostname
-        hostname = sock.gethostname()
+    hostname ='localhost'
     with tf.NamedTemporaryFile(suffix='.pem',prefix='gaidaros.') as tempcert:
         with tf.NamedTemporaryFile(suffix='.cnf',prefix='gaidaros.') as tempconf:
             with open('/usr/share/ssl-cert/ssleay.cnf', 'r') as conftemplate:
                 for _line in conftemplate.readlines():
                     tempconf.write(_patt.sub('"' + hostname + '"', _line))
-                if altname is not None:
-                    tempconf.write('subjectAltName=' + altname + '\n')
                 tempconf.flush()
                 sp.check_call(['openssl', 'req', '-config', tempconf.name, '-new', '-x509', '-days', '1',
                                '-nodes', '-out', tempcert.name, '-keyout', tempcert.name])
