@@ -5,7 +5,7 @@ if __name__ != '__main__':
     raise RuntimeError('This script should only be run directly. It is not a library.')
 
 ## imports
-import sys, csv
+import sys, ast
 from getopt import getopt
 from gaidaros import *
 from gaidaros import __version__
@@ -26,11 +26,14 @@ OPTIONS:
  -r [] : Recv size (int)
  -z [] : use SSL ('True'/'False')
  -Z [] : SSL options (str) e.g.
-         "ssl_certfile='',ssl_keyfile='',ssl_cert_reqs=#,ssl_ca_certs='',ssl_version=#"
+         "ssl_certfile='..',ssl_keyfile='..',ssl_cert_reqs=##,ssl_ca_certs='..',ssl_version=##"
  -D [] : let server Die on errors ('True'/'False')
  -m [] : Module to load in order to find handler class (str)
  -x [] : handler class name (str)
- -a [] : comma-separated list of handler class Args (str, csv of kev-val pairs)
+ -a [] : handler class Args (str) e.g.
+         "'localhost',42"
+ -k [] : handler class Kwargs (str) e.g.
+         "recv_size=1024,name='Bob'"
  -h [] : handler Handle-request method name or code (str)
  -e [] : handler End-of-request method name or code (str)
  -s [] : handler Split-request method name or code (str)
@@ -48,9 +51,12 @@ VERSION:
 def usage(ostream=sys.stderr):
     ostream.write(usage_text)
 ## preset vars
-verbose = host = port = ip_version = backlog = poll_timeout = recv_size = use_ssl = ssl_certfile = ssl_keyfile = ssl_cert_reqs = ssl_ca_certs = ssl_version = die_on_error = handler_module = handler_class = handler_class_args = handle_request = end_request = split_request = decode_request = encode_response = None
+verbose = host = port = ip_version = backlog = poll_timeout = recv_size = use_ssl = ssl_certfile = \
+ ssl_keyfile = ssl_cert_reqs = ssl_ca_certs = ssl_version = die_on_error = handler_module = \
+ handler_class = handler_class_args = handler_class_kwargs = handle_request = end_request = \
+ split_request = decode_request = encode_response = None
 ## parse opts
-optlist, arguments = getopt(sys.argv[1:],'uvc:H:p:i:46b:t:r:z:Z:D:m:x:a:h:e:s:d:E:')
+optlist, arguments = getopt(sys.argv[1:],'uvc:H:p:i:46b:t:r:z:Z:D:m:x:a:k:h:e:s:d:E:')
 ## getopts
 try:
     for switch, val in optlist:
@@ -78,25 +84,22 @@ try:
         elif switch == '-r':
             recv_size = int(val)
         elif switch == '-z':
-            if _ssl_opts_dict['use_ssl'].lower() in ('false', '0', 'no', 'off', ''):
+            if val.lower() in ('false', '0', 'no', 'off', ''):
                 use_ssl = False
-            elif _ssl_opts_dict['use_ssl'].lower() in ('true', '1', 'yes', 'on'):
+            elif val.lower() in ('true', '1', 'yes', 'on'):
                 use_ssl = True
             else:
                 raise TypeError('unknown parameter to -z')
         elif switch == '-Z':
-            for _ssl_opt in list(*csv.reader([val.replace('\n','')], skipinitialspace = True, quoting = csv.QUOTE_NONE)):
-                _ssl_opt_ind = _ssl_opt.index(':')
-                _ssl_opts_dict[_ssl_opt[:_ssl_opt_ind]] = _ssl_opt[_ssl_opt_ind:]
+            _ssl_opts_dict = dict(ast.literal_eval(val))
             try:
                 for _arg in ('ssl_certfile', 'ssl_keyfile', 'ssl_ca_certs'):
-                    globals()[_arg] = _ssl_opts_dict.pop(_arg)
+                    globals()[_arg] = str(_ssl_opts_dict.pop(_arg))
                 for _arg in ('ssl_cert_reqs', 'ssl_version'):
                     globals()[_arg] = int(_ssl_opts_dict.pop(_arg))
-
             except KeyError:
                 pass
-            if ssl_opts_dict:
+            if _ssl_opts_dict:
                 raise TypeError('unknown parameter to -Z')
         elif switch == '-D':
             if val.lower() in ('False', '0', 'no', 'off', ''):
@@ -110,8 +113,9 @@ try:
         elif switch == '-x':
             handler_class = val
         elif switch == '-a':
-            handler_class_args = list(
-              *csv.reader([val.replace('\n','')], skipinitialspace = True, quoting = csv.QUOTE_NONE))
+            handler_class_args = tuple(ast.literal_eval(val))
+        elif switch == '-k':
+            handler_class_kwargs = dict(ast.literal_eval(val))
         elif switch == '-h':
             handle_request = val
         elif switch == '-e':
@@ -135,6 +139,7 @@ try:
       ssl_cert_reqs=ssl_cert_reqs, ssl_ca_certs=ssl_ca_certs, ssl_version=ssl_version, \
       die_on_error=die_on_error, \
       handler_module=handler_module, handler_class=handler_class, handler_class_args=handler_class_args, \
+      handler_class_kwargs=handler_class_kwargs, \
       handle_request=handle_request, end_request=end_request, split_request=split_request, \
       decode_request=decode_request, encode_response=encode_response)
 except StandardError as e:

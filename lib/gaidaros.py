@@ -16,7 +16,7 @@ Async server micro-framework for control freaks
 """
 __version__ = '0.3.11'
 
-import sys, os, ConfigParser, inspect, importlib, socket, select, errno, csv
+import sys, os, ConfigParser, inspect, importlib, socket, select, errno, ast
 try:
     import ssl
     has_ssl = True
@@ -56,7 +56,7 @@ class Gaidaros(object):
                  backlog=None, poll_timeout=None, recv_size=None, \
                  use_ssl=None, ssl_certfile=None, ssl_keyfile=None, \
                  ssl_cert_reqs=None, ssl_ca_certs=None, ssl_version=None, die_on_error=None, \
-                 handler_class=None, handler_class_args=None, handler_module=None, \
+                 handler_class=None, handler_class_args=None, handler_class_kwargs=None, handler_module=None, \
                  handle_request=None, end_request=None, split_request=None, \
                  decode_request=None, encode_response=None):
         _proc = {
@@ -105,7 +105,7 @@ class Gaidaros(object):
             if ssl_ca_certs is None:
                 ssl_ca_certs = self.cnf.get('parameter', 'ssl_ca_certs')
             if ssl_version is None:
-                ssl_version = self.cnf.get('parameter', 'ssl_version')
+                ssl_version = self.cnf.getint('parameter', 'ssl_version')
             if die_on_error is None:
                 die_on_error = self.cnf.getboolean('parameter', 'die_on_error')
             if handler_module is None:
@@ -113,8 +113,13 @@ class Gaidaros(object):
             if handler_class is None:
                 handler_class = self.cnf.get('handler', 'class')
             if handler_class_args is None:
-                handler_class_args = tuple(
-                  *csv.reader([self.cnf.get('handler', 'class_args').replace('\n','')], skipinitialspace = True, quoting = csv.QUOTE_NONE))
+                _tmpvar = self.cnf.get('handler', 'class_args')
+                if _tmpvar not in (None, ''):
+                    handler_class_args = tuple(ast.literal_eval(_tmpvar))
+            if handler_class_kwargs is None:
+                _tmpvar = self.cnf.get('handler', 'class_kwargs')
+                if _tmpvar not in (None, ''):
+                    handler_class_kwargs = dict(ast.literal_eval(_tmpvar))
             for _prockey in _proc:
                 if _prockey[-5:] != '_name' and _proc[_prockey] in (None, ''):
                     _proc[_prockey] = self.cnf.get('handler', _prockey)
@@ -161,6 +166,7 @@ class Gaidaros(object):
             handler_class_name = ''
             handler_class = None
             handler_class_args = ()
+            handler_class_kwargs = {}
         elif isinstance(handler_class, basestring):
             handler_class_name = str(handler_class)
             if handler_module is not None and hasattr(handler_module, handler_class_name) and inspect.isclass(getattr(handler_module, handler_class_name)):
@@ -192,7 +198,7 @@ class Gaidaros(object):
         if handler_class is None:
             self.handler = None
         else:
-            self.handler = handler_class(*handler_class_args)
+            self.handler = handler_class(*handler_class_args, **handler_class_kwargs)
         # The following looped code is perverse but saves more than 100 lines of "pythonic"
         # (and less DRY) code
         _routine_defaults = {
@@ -249,9 +255,9 @@ class Gaidaros(object):
         sock.setblocking(0)
         sock_fileno = sock.fileno()
         if self.use_ssl:
-            self.ssl_opts = {'server_side': True, 'certfile': self.ssl_certfile, 'cert_reqs': self.ssl_cert_reqs, 'ca_certs': self.ssl_ca_certs, 'ssl_version': self.ssl_version}
+            self.ssl_opts = {'server_side': True, 'certfile': os.path.realpath(self.ssl_certfile), 'cert_reqs': self.ssl_cert_reqs, 'ca_certs': os.path.realpath(self.ssl_ca_certs), 'ssl_version': self.ssl_version}
             if self.ssl_keyfile is not None:
-                self.ssl_opts.update({'keyfile': self.ssl_keyfile})
+                self.ssl_opts.update({'keyfile': os.path.realpath(self.ssl_keyfile)})
         ## setup poller
         epoll = select.epoll()
         epoll.register(sock_fileno, select.EPOLLIN | select.EPOLLET)
