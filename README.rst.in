@@ -63,15 +63,6 @@ From pypi
 
     $ pip install @name@
 
-To install Gaidaros using pip you must make sure you have a
-recent version of distribute installed
-
-::
-
-    $ curl -O http://python-distribute.org/distribute_setup.py
-    $ sudo python distribute_setup.py
-    $ easy_install pip
-
 From source
 ~~~~~~~~~~~
 
