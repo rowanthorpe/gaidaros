@@ -105,7 +105,7 @@ class Gaidaros(object):
             if ssl_ca_certs is None:
                 ssl_ca_certs = self.cnf.get('parameter', 'ssl_ca_certs')
             if ssl_version is None:
-                ssl_version = self.cnf.get('parameter', 'ssl_version')
+                ssl_version = self.cnf.getint('parameter', 'ssl_version')
             if die_on_error is None:
                 die_on_error = self.cnf.getboolean('parameter', 'die_on_error')
             if handler_module is None:
@@ -113,9 +113,13 @@ class Gaidaros(object):
             if handler_class is None:
                 handler_class = self.cnf.get('handler', 'class')
             if handler_class_args is None:
-                handler_class_args = ast.literal_eval('tuple(' + self.cnf.get('handler', 'class_args') + ')')
+                _tmpvar = self.cnf.get('handler', 'class_args')
+                if _tmpvar not in (None, ''):
+                    handler_class_args = tuple(ast.literal_eval(_tmpvar))
             if handler_class_kwargs is None:
-                handler_class_kwargs = ast.literal_eval('dict(' + self.cnf.get('handler', 'class_kwargs') + ')')
+                _tmpvar = self.cnf.get('handler', 'class_kwargs')
+                if _tmpvar not in (None, ''):
+                    handler_class_kwargs = dict(ast.literal_eval(_tmpvar))
             for _prockey in _proc:
                 if _prockey[-5:] != '_name' and _proc[_prockey] in (None, ''):
                     _proc[_prockey] = self.cnf.get('handler', _prockey)
@@ -251,9 +255,9 @@ class Gaidaros(object):
         sock.setblocking(0)
         sock_fileno = sock.fileno()
         if self.use_ssl:
-            self.ssl_opts = {'server_side': True, 'certfile': self.ssl_certfile, 'cert_reqs': self.ssl_cert_reqs, 'ca_certs': self.ssl_ca_certs, 'ssl_version': self.ssl_version}
+            self.ssl_opts = {'server_side': True, 'certfile': os.path.realpath(self.ssl_certfile), 'cert_reqs': self.ssl_cert_reqs, 'ca_certs': os.path.realpath(self.ssl_ca_certs), 'ssl_version': self.ssl_version}
             if self.ssl_keyfile is not None:
-                self.ssl_opts.update({'keyfile': self.ssl_keyfile})
+                self.ssl_opts.update({'keyfile': os.path.realpath(self.ssl_keyfile)})
         ## setup poller
         epoll = select.epoll()
         epoll.register(sock_fileno, select.EPOLLIN | select.EPOLLET)

@@ -186,7 +186,7 @@ TODO
 
 * OTHER:
 
- - [v0.3.12]::
+ - [v0.3.14]::
 
      * use ConfigParser correctly (and then remove all the redundant "defaults" code)
      * perhaps create reusable internal socket pool rather than tearing down and rebuilding each (will
@@ -197,7 +197,6 @@ TODO
      * use setting ONESHOT for epoll rather than tracking a one_req var (oneclient -> ONESHOT on the listener,
        onequery -> ONESHOT on each spawned connection)
      * (carefully) remove/gitignore-hide files which are generated from .in files (e.g. lib/gaidaros.py...)
-     * in testgaidaros.py run a client to do a request against a one-time handle action
      * catch up CHANGES.txt file
      * create pidfile in sys_run when ioloop starts, remove when it stops
      * set configurable alarm-triggered reaper for zombie connections (GC) while ioloop runs

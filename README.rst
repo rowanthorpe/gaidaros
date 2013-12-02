@@ -46,7 +46,7 @@ Features
   use threads, greenthreads, multiprocesses, or pools
   thereof too
 
-* IPv4 and/or IPv6, SSL (TLSv1) or not
+* IPv4 and/or IPv6, SSL (TLSv1, SSLv3, SSLv23) or not
 
 * TCP, *TODO*: UDP, unixsocket, etc
 
