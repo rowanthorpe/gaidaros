@@ -12,7 +12,7 @@ TODO
 
  - [v0.5] mp, threading, gevent.?, doctest, from timeit import Timer
 
- - [v2.0] pp/pyparallel (cluster handlers), zlib (compressed streams)
+ - [v2.0] pp/pyparallel/pyrpc (cluster handlers), zlib (compressed streams)
 
  - [v2.5] pyuv (platform portability), cython (speed)
 
@@ -28,7 +28,7 @@ TODO
        Daemon (bool)
          * default = False
 
-   -k
+   -R
        TCP Cork (bool)
          * default = False [Cork = off]
 
