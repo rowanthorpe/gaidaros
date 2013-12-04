@@ -26,14 +26,14 @@ OPTIONS:
  -r [] : Recv size (int)
  -z [] : use SSL ('True'/'False')
  -Z [] : SSL options (str) e.g.
-         "ssl_certfile='..',ssl_keyfile='..',ssl_cert_reqs=##,ssl_ca_certs='..',ssl_version=##"
+         "{'ssl_certfile':'..','ssl_keyfile':'..','ssl_cert_reqs':##,'ssl_ca_certs':'..','ssl_version'=##}"
  -D [] : let server Die on errors ('True'/'False')
  -m [] : Module to load in order to find handler class (str)
  -x [] : handler class name (str)
  -a [] : handler class Args (str) e.g.
-         "'localhost',42"
+         "['localhost',42]"
  -k [] : handler class Kwargs (str) e.g.
-         "recv_size=1024,name='Bob'"
+         "{'recv_size':1024,'name':'Bob'}"
  -h [] : handler Handle-request method name or code (str)
  -e [] : handler End-of-request method name or code (str)
  -s [] : handler Split-request method name or code (str)
