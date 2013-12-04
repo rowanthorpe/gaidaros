@@ -25,15 +25,12 @@ OPTIONS:
  -t [] : poll Timeout in seconds (int)
  -r [] : Recv size (int)
  -z [] : use SSL ('True'/'False')
- -Z [] : SSL options (str) e.g.
-         "{'ssl_certfile':'..','ssl_keyfile':'..','ssl_cert_reqs':##,'ssl_ca_certs':'..','ssl_version'=##}"
+ -Z [] : SSL options (str) e.g. "{'ssl_certfile':'..','ssl_keyfile':'..','ssl_cert_reqs':n,'ssl_ca_certs':'..','ssl_version'=n}"
  -D [] : let server Die on errors ('True'/'False')
  -m [] : Module to load in order to find handler class (str)
  -x [] : handler class name (str)
- -a [] : handler class Args (str) e.g.
-         "['localhost',42]"
- -k [] : handler class Kwargs (str) e.g.
-         "{'recv_size':1024,'name':'Bob'}"
+ -a [] : handler class Args (str) e.g. "['localhost',42]"
+ -k [] : handler class Kwargs (str) e.g. "{'recv_size':1024,'name':'Bob'}"
  -h [] : handler Handle-request method name or code (str)
  -e [] : handler End-of-request method name or code (str)
  -s [] : handler Split-request method name or code (str)
@@ -45,6 +42,7 @@ Commandline interface to the gaidaros lib. Values' defaults are set by the
 config file. For details of SSL options see the python "ssl" module's docs.
 
 VERSION:
+""" + """
 {}
 """.format(__version__)
 ## defs
