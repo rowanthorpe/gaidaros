@@ -24,9 +24,9 @@ OPTIONS:
  -b [] : Backlog queue size (int)
  -t [] : poll Timeout in seconds (int)
  -r [] : Recv size (int)
- -z [] : use SSL ('True'/'False')
- -Z [] : SSL options (str) e.g. "{'ssl_certfile':'..','ssl_keyfile':'..','ssl_cert_reqs':n,'ssl_ca_certs':'..','ssl_version'=n}"
- -D [] : let server Die on errors ('True'/'False')
+ -z    : use SSL
+ -Z [] : SSL options (str) e.g. "{'ssl_certfile':'..','ssl_keyfile':'..','ssl_cert_reqs':n,'ssl_ca_certs':'..','ssl_version':n}"
+ -D    : let server Die on errors
  -m [] : Module to load in order to find handler class (str)
  -x [] : handler class name (str)
  -a [] : handler class Args (str) e.g. "['localhost',42]"
@@ -54,7 +54,7 @@ verbose = host = port = ip_version = backlog = poll_timeout = recv_size = use_ss
  handler_class = handler_class_args = handler_class_kwargs = handle_request = end_request = \
  split_request = decode_request = encode_response = None
 ## parse opts
-optlist, arguments = getopt(sys.argv[1:],'uvc:H:p:i:46b:t:r:z:Z:D:m:x:a:k:h:e:s:d:E:')
+optlist, arguments = getopt(sys.argv[1:],'uvc:H:p:i:46b:t:r:zZ:Dm:x:a:k:h:e:s:d:E:')
 ## getopts
 try:
     for switch, val in optlist:
@@ -82,30 +82,19 @@ try:
         elif switch == '-r':
             recv_size = int(val)
         elif switch == '-z':
-            if val.lower() in ('false', '0', 'no', 'off', ''):
-                use_ssl = False
-            elif val.lower() in ('true', '1', 'yes', 'on'):
-                use_ssl = True
-            else:
-                raise TypeError('unknown parameter to -z')
+            use_ssl = True
         elif switch == '-Z':
             _ssl_opts_dict = dict(ast.literal_eval(val))
-            try:
-                for _arg in ('ssl_certfile', 'ssl_keyfile', 'ssl_ca_certs'):
+            for _arg in ('ssl_certfile', 'ssl_keyfile', 'ssl_ca_certs'):
+                if _arg in _ssl_opts_dict:
                     globals()[_arg] = str(_ssl_opts_dict.pop(_arg))
-                for _arg in ('ssl_cert_reqs', 'ssl_version'):
+            for _arg in ('ssl_cert_reqs', 'ssl_version'):
+                if _arg in _ssl_opts_dict:
                     globals()[_arg] = int(_ssl_opts_dict.pop(_arg))
-            except KeyError:
-                pass
             if _ssl_opts_dict:
-                raise TypeError('unknown parameter to -Z')
+                raise TypeError('unknown elements in parameter to -Z, {}'.format(_ssl_opts_dict))
         elif switch == '-D':
-            if val.lower() in ('False', '0', 'no', 'off', ''):
-                die_on_error = False
-            elif val.lower() in ('True', '1', 'yes', 'on'):
-                die_on_error = True
-            else:
-                raise TypeError('unknown parameter for -D')
+            die_on_error = True
         elif switch == '-m':
             handler_module = val
         elif switch == '-x':
