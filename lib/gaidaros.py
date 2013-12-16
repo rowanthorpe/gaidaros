@@ -390,7 +390,7 @@ class Gaidaros(object):
                                             e_modify(fileno, sel_EPOLLIN | sel_EPOLLET)
                                         else:
                                             e_unregister(fileno)
-                                            connections[fileno].close()
+                                            connections[fileno].shutdown(socket.SHUT_RDWR)
                                             del connections[fileno], requests[fileno], dec_requests[fileno], responses[fileno], keepalive_flags[fileno]
                                             if one_req:
                                                 shutdown_wanted = True
@@ -401,6 +401,7 @@ class Gaidaros(object):
                                     if verbose:
                                         log('-' * 40, 'hanging up socket ' + str(fileno))
                                     e_unregister(fileno)
+                                    connections[fileno].shutdown(socket.SHUT_RDWR)
                                     connections[fileno].close()
                                     del connections[fileno], requests[fileno], dec_requests[fileno], responses[fileno], keepalive_flags[fileno]
                                     if one_req:
@@ -409,6 +410,7 @@ class Gaidaros(object):
                                 if die_on_error:
                                     raise
                                 e_unregister(fileno)
+                                connections[fileno].shutdown(socket.SHUT_RDWR)
                                 connections[fileno].close()
                                 del connections[fileno], requests[fileno], dec_requests[fileno], responses[fileno], keepalive_flags[fileno]
                                 if one_req:
@@ -418,6 +420,7 @@ class Gaidaros(object):
             ## cleanup leftover connections
             for fileno in connections.keys(): # eager evaluate
                 e_unregister(fileno)
+                connections[fileno].shutdown(socket.SHUT_RDWR)
                 connections[fileno].close()
             ## unregister and close server
             e_unregister(sock_fileno)
