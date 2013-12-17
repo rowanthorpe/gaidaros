@@ -5,16 +5,20 @@ if __name__ != '__main__':
     raise RuntimeError('This script should only be run directly. It is not a library.')
 
 ## imports
-import sys, ast
+import sys, ast, logging
+from daemon import runner
 from getopt import getopt
 from gaidaros import *
 from gaidaros import __version__
 conf = @configfile@
 usage_text = """\
-Usage: gaidaros [OPTIONS] [--] [config-file]
+Usage: gaidaros [OPTIONS] [--] [daemonisation-command]
 
 OPTIONS:
+ -u    : this usage message
  -v    : Verbose output
+ -l    : Log to logfile
+ -M    : daeMonise this process
  -c [] : Config file to source (str: default = """ + conf + """)
  -H [] : Host (str)
  -p [] : Port (int)
@@ -36,7 +40,8 @@ OPTIONS:
  -s [] : handler Split-request method name or code (str)
  -d [] : handler Decode-request method name or code (str)
  -E [] : handler Encode-response method name or code (str)
- -u    : this usage message
+ -P [] : Pid-file location for running in daemon mode (str)
+ -L [] : Logfile location (str)
 
 Commandline interface to the gaidaros lib. Values' defaults are set by the
 config file. For details of SSL options see the python "ssl" module's docs.
@@ -44,17 +49,29 @@ config file. For details of SSL options see the python "ssl" module's docs.
 VERSION:
 """ + """
 {}
+
+BUGS:
+
+  Should move logging setup and daemonisation into Gaidaros library so it is
+  possible from custom code, not just via this script.
+
+  Should do proper logging in Gaidaros library to utilise the proper logging
+  setup done here.
+
 """.format(__version__)
 ## defs
 def usage(ostream=sys.stderr):
     ostream.write(usage_text)
 ## preset vars
-verbose = host = port = ip_version = backlog = poll_timeout = recv_size = use_ssl = ssl_certfile = \
- ssl_keyfile = ssl_cert_reqs = ssl_ca_certs = ssl_version = die_on_error = handler_module = \
- handler_class = handler_class_args = handler_class_kwargs = handle_request = end_request = \
- split_request = decode_request = encode_response = None
+verbose = dologging = host = port = ip_version = backlog = poll_timeout = recv_size = \
+ use_ssl = ssl_certfile = ssl_keyfile = ssl_cert_reqs = ssl_ca_certs = ssl_version = \
+ die_on_error = handler_module = handler_class = handler_class_args = handler_class_kwargs = \
+ handle_request = end_request = split_request = decode_request = encode_response = None
+daemonised = False
+pidfile_location = "/var/run/gaidaros/gaidaros.pid"
+logfile_location = "/var/log/gaidaros/gaidaros.log"
 ## parse opts
-optlist, arguments = getopt(sys.argv[1:],'uvc:H:p:i:46b:t:r:zZ:Dm:x:a:k:h:e:s:d:E:')
+optlist, arguments = getopt(sys.argv[1:],'uvMc:H:p:i:46b:t:r:zZ:Dm:x:a:k:h:e:s:d:E:P:L:')
 ## getopts
 try:
     for switch, val in optlist:
@@ -63,6 +80,10 @@ try:
             sys.exit(0)
         elif switch == '-v':
             verbose = True
+        elif switch == '-l':
+            dologging = True
+        elif switch == '-M':
+            daemonised = True
         elif switch == '-c':
             conf = val
         elif switch == '-H':
@@ -113,12 +134,25 @@ try:
             decode_request = val
         elif switch == '-E':
             encode_response = val
+        elif switch == '-P':
+            pidfile_location = val
+        elif switch == '-L':
+            logfile_location = val
 except (StandardError,TypeError) as e:
     die(warning='Problem setting values from options', stack=e)
-if arguments:
-    conf = arguments[0]
+if daemonised:
+    if arguments:
+        if arguments[0] in ('start', 'stop', 'restart'):
+            sys.argv = (sys.argv[0], arguments[0])
+        else:
+            die(warning='Unrecognised daemon command, {}'.format(arguments[0]))
+    else:
+        sys.argv = (sys.argv[0], 'start')
+
 ## initiate server
 try:
+    # TODO: Pass logging, logfile_location, daemonised, pidfile_location to Gaidaros library
+    #       and handle them internally there (not in this script)
     server = Gaidaros(
       verbose=verbose, conf=conf, host=host, port=port, ip_version=ip_version, \
       backlog=backlog, poll_timeout=poll_timeout, recv_size=recv_size, \
@@ -131,8 +165,41 @@ try:
       decode_request=decode_request, encode_response=encode_response)
 except StandardError as e:
     die(warning='Problem instantiating server', stack=e)
+_serve():
+    try:
+        server.serve()
+    except StandardError as e:
+        die(warning='Problem running server', stack=e)
+
 ## run server
-try:
-    server.serve()
-except StandardError as e:
-    die(warning='Problem running server', stack=e)
+if daemonised:
+    class App():
+        def __init__(self):
+            self.stdin_path = '/dev/null'
+            self.stdout_path = '/dev/null'
+            self.stderr_path = '/dev/null'
+            self.pidfile_path = pidfile_location
+            self.pidfile_timeout = 5
+        def run(self):
+            _serve()
+            # The below are examples of logger commands which should go in the Gaidaros lib code when logging is added
+            # and passing in logger object is possible.
+            #logger.debug("Debug message")
+            #logger.info("Info message")
+            #logger.warn("Warning message")
+            #logger.error("Error message")
+    app = App()
+    if dologging:
+        logger = logging.getLogger("DaemonLog")
+        logger.setLevel(logging.INFO)
+        formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+        handler = logging.FileHandler(logfile_location)
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
+    daemon_runner = runner.DaemonRunner(app)
+    #This ensures that the logger file handle does not get closed during daemonisation
+    if dologging:
+        daemon_runner.daemon_context.files_preserve=[handler.stream]
+    daemon_runner.do_action()
+else:
+    _serve()
