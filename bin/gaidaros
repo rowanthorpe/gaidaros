@@ -53,7 +53,8 @@ VERSION:
 BUGS:
 
   Should move logging setup and daemonisation into Gaidaros library so it is
-  possible from custom code, not just via this script.
+  possible from custom code, not just via this script (involves adding the opts
+  for it to the config file lib's too).
 
   Should do proper logging in Gaidaros library to utilise the proper logging
   setup done here.
@@ -66,7 +67,7 @@ def usage(ostream=sys.stderr):
 verbose = dologging = host = port = ip_version = backlog = poll_timeout = recv_size = \
  use_ssl = ssl_certfile = ssl_keyfile = ssl_cert_reqs = ssl_ca_certs = ssl_version = \
  die_on_error = handler_module = handler_class = handler_class_args = handler_class_kwargs = \
- handle_request = end_request = split_request = decode_request = encode_response = None
+ end_request = split_request = handle_request = decode_request = encode_response = None
 daemonised = False
 pidfile_location = "/var/run/gaidaros/gaidaros.pid"
 logfile_location = "/var/log/gaidaros/gaidaros.log"
