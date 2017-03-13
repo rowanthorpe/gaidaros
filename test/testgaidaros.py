@@ -29,7 +29,7 @@ def tests():
         _version = (sock.AF_INET, sock.AF_INET6)
         _type = ('single', 'multiple')
         _security = ('plain', 'ssl')
-        _sslversion = (ssl.PROTOCOL_TLSv1)
+        _sslversion = (ssl.PROTOCOL_TLSv1,)
         _role = ('server', 'client')
 
         for _v in _version:
